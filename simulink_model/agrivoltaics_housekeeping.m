@@ -4,7 +4,7 @@ clc;
 
 %% Add Path
 
-addpath('C:\Users\ciepm\OneDrive\Documents\Github\agrivoltaics\simulink_model\modules');
+addpath(genpath(pwd));
 
 %%
 
