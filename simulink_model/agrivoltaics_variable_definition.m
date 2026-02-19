@@ -1,63 +1,46 @@
 model_name = 'agrivoltaics_v1'; 
 
-%% Parameter Definition
-% land parameters
-% land area parameters
-    %  assuming rectangular plot
-land_x = 50; % length of base of plot (m)
-land_y = 50; % length of height of plot (m)
-land_angle = 0; % rotation of plot along z axis (m) - ccw, 0 rad would assume x runs parallel along latitude and y along longitude
+%% 1. Parameter Definition (Fixed values)
 
-params.land = [land_x; land_y; land_angle];
-% weather parameters
+% Land parameters
+params.land.x = 50;       % length of base (m)
+params.land.y = 50;       % length of height (m)
+params.land.angle = 0;    % rotation (rad)
 
-params.weather = [];
+% 2. Load the processed weather data from the .mat file
+weather_data = load('pv_inputs.mat'); 
+
+% 3. Assign the loaded data into parameter structure
+params.weather.DNI = weather_data.DNI;       
+params.weather.DHI = weather_data.DHI;       
+params.weather.beta_s = weather_data.beta_s; 
+params.weather.phi_s = weather_data.phi_s;
+
 % PV parameters
-n_p = .2; % panel efficiency
+params.PV.n_p = 0.2;      % panel efficiency
 
-params.PV = [n_p];
+% Crop & Econ parameters
+params.crop.elec_price = 0.5; 
+params.crop.crop_price = 0.5;
 
-% crop parameters
- electricity_price = .5; % $/kWh
- crop_price = .5; % $/kg 
+%% 2. Design Variables
 
- params.crop = [electricity_price; crop_price];
+% Panel layout variables
+var.PV.z_p = 2;           % panel height (m) 
+var.PV.l_p = 1;           % panel length (m)
+var.PV.w_p = 1;           % panel width (m)
+var.PV.phi = 0;           % azimuth (rad)
+var.PV.sigma = pi/4;      % tilt (rad)
+var.PV.psi = 0;           % field layout angle (rad)
+var.PV.y_p = 1;           % row distance (m)
+var.PV.x_p = 0.1;         % panel distance (m)
 
- % sustainability parameters
+%% 3.Simulink Bus Objects
+Simulink.Bus.createObject(params);
+Simulink.Bus.createObject(var);
 
- params.sus = [];
+% Rename the auto-generated buses to match your model ports
+% createObject makes 'slBus1', 'slBus2' etc. We need to rename them.
 
- % economic parameters
-
- params.econ = [];
-
- % all parameters
-parameters = [params.land;
-   params.weather;
-   params.PV;
-   params.crop;
-   params.sus;
-   params.econ];
-
- %% Design Variables
-% includes initial guess for design variable
-% panel layout variables
-z_p = 2; % panel height (m) 
-l_p = 1; % panel length (m)
-w_p = 1; % panel width (m)
-phi = 0; % azimuth angle (radians) - relative to true South, going ccw e.g. pi/2 rad is East
-sigma = pi/4; % tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane
-psi = 0; % field layout angle (radians) -  direction of main axis of PV array rows measured from west-east line 
-y_p = 1; %row distance (m) - distance between parallel rows
-x_p = .1; %panel distance (m) - distance between panels within a row
-
-var.PV = [z_p; l_p; w_p; phi; sigma; psi; y_p;x_p];
-
-% crop layout variables
-
-var.crop = [];
-
-% all design variables
-
-variables = [var.PV; var.crop];
-
+params_bus = slBus1; 
+var_bus = slBus2; 
