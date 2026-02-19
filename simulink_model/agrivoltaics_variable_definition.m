@@ -46,12 +46,12 @@ z_p = 2; % panel height (m)
 l_p = 1; % panel length (m)
 w_p = 1; % panel width (m)
 phi = 0; % azimuth angle (radians) - relative to true South, going ccw e.g. pi/2 rad is East
-theta = pi/4; % tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane
+sigma = pi/4; % tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane
 psi = 0; % field layout angle (radians) -  direction of main axis of PV array rows measured from west-east line 
 y_p = 1; %row distance (m) - distance between parallel rows
 x_p = .1; %panel distance (m) - distance between panels within a row
 
-var.PV = [z_p; l_p; w_p; phi; theta; psi; y_p;x_p];
+var.PV = [z_p; l_p; w_p; phi; sigma; psi; y_p;x_p];
 
 % crop layout variables
 
