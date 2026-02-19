@@ -18,17 +18,22 @@ arguments (Output)
     P ;%estimated power output per panel
 end
 
+p_tot=0;
+for i = 1:24
+    if beta_s(i) <= 0
+        continue; % Skip to next hour (P_inst remains 0 effectively)
+    end
 % Incidence angle
-cos_theta = cos(beta_s(1))*cos(phi_s(1) - phi)*sin(sigma) ...
-          + sin(beta_s(1))*cos(sigma);
+cos_theta = cos(beta_s(i))*cos(phi_s(i) - phi)*sin(sigma) ...
+          + sin(beta_s(i))*cos(sigma);
 
 theta = acos(cos_theta);
 
 % Direct beam
-I_db = DNI(1) .* cos_theta;
+I_db = DNI(i) .* cos_theta;
 
 % Diffuse irradiance
-I_diff = DHI(1) .* (1 + cos(sigma)) / 2;
+I_diff = DHI(i) .* (1 + cos(sigma)) / 2;
 
 % Reflected (Need to double check equation)
 %I_ref = (DNI*sin(beta_s) + DHI) .* albedo .* (1 - cos(tilt)) / 2;
@@ -38,6 +43,8 @@ R = I_db + I_diff; %+ I_ref;
 
 % Simple power model
 A_p = l_p*w_p ; %panel area m^2
-P = n_p * A_p * R; % power equation
-
+p_hour = n_p * A_p * R; % power equation
+p_tot=p_tot+p_hour;
+end
+P=p_tot;
 end
