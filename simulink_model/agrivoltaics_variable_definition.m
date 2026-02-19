@@ -1,4 +1,17 @@
-model_name = 'agrivoltaics_v1'; 
+%% Clear
+clear;
+clc;
+%%
+%% Add Path
+
+addpath(genpath(pwd));
+
+%%
+
+%open data dictionary busses
+data_dict = Simulink.data.dictionary.open('agrivoltaics_v1_data_dict.sldd');
+open_system("agrivoltaics_v1");
+
 
 %% 1. Parameter Definition (Fixed values)
 
@@ -44,3 +57,5 @@ Simulink.Bus.createObject(var);
 
 params_bus = slBus1; 
 var_bus = slBus2; 
+
+%out = sim("agrivoltaics_v1.slx");
