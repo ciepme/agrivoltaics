@@ -37,6 +37,9 @@ params.crop.elec_price = 0.5;
 params.crop.crop_price = 0.5;
 params.crop.HI = 0.3; %this is harvest index, for raspberries it is roughly .3, so 30% of the plant weight is berries- changes based on crop choice
 params.crop.MC = .85; %this is moisture content, raspberries are about 85% water
+params.crop.RUE = 2.0; %radiation use efficiency, g of biomass per MJ of light, crop dependent
+params.crop.k =  0.65; %light extinction coefficient, crop dependent
+params.crop.LAI = 3.0; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
 
 %% 2. Design Variables
 
