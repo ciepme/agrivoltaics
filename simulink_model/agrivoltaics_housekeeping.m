@@ -17,8 +17,3 @@ open_system("agrivoltaics_v1");
 variable_a = [0 5; 1 5];
 variable_b = [0 6; 1 6];
 
-%%
-modelName = "agrivoltaics_v1.slx";
-simOut = sim(modelName);
-S_out = simOut.yout{1}.Values.Data;
-R_out = simOut.yout{2}.Values.Data;

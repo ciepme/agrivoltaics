@@ -65,6 +65,7 @@ x_p_vals   = x_p_levels(L(:,5)).';
 
 S_out = nan(n_runs, 1);
 R_out = nan(n_runs, 1);
+total_panels_out = nan(n_runs, 1);
 status = strings(n_runs, 1);
 error_message = strings(n_runs, 1);
 
@@ -83,13 +84,51 @@ for i = 1:n_runs
         simOut = sim(modelName);
         s_data = simOut.yout{1}.Values.Data;
         r_data = simOut.yout{2}.Values.Data;
+        tp_obj = [];
+        if any(strcmp(simOut.who, 'total_panels'))
+            tp_obj = simOut.get('total_panels');
+        elseif evalin('base', 'exist(''total_panels'', ''var'')')
+            tp_obj = evalin('base', 'total_panels');
+        end
 
         S_out(i) = s_data(end);
         R_out(i) = r_data(end);
+        total_panels_out(i) = local_last_numeric(tp_obj);
         status(i) = "ok";
     catch ME
         status(i) = "error";
         error_message(i) = string(getReport(ME, 'extended', 'hyperlinks', 'off'));
+    end
+end
+
+% Effect calculation (based on level means vs overall mean).
+% For OA table, report additive effect sum over the run's factor levels.
+effect_co2eq = nan(n_runs, 1);
+effect_profit = nan(n_runs, 1);
+ok_mask = status == "ok";
+
+if any(ok_mask)
+    m_co2 = mean(S_out(ok_mask), 'omitnan');
+    m_profit = mean(R_out(ok_mask), 'omitnan');
+    level_effect_co2 = nan(5, 3);
+    level_effect_profit = nan(5, 3);
+
+    for j = 1:5
+        for k = 1:3
+            mk = ok_mask & (L(:,j) == k);
+            if any(mk)
+                level_effect_co2(j,k) = mean(S_out(mk), 'omitnan') - m_co2;
+                level_effect_profit(j,k) = mean(R_out(mk), 'omitnan') - m_profit;
+            end
+        end
+    end
+
+    for i = 1:n_runs
+        if status(i) ~= "ok"
+            continue;
+        end
+        effect_co2eq(i) = sum(level_effect_co2(sub2ind([5, 3], (1:5).', L(i,:).')), 'omitnan');
+        effect_profit(i) = sum(level_effect_profit(sub2ind([5, 3], (1:5).', L(i,:).')), 'omitnan');
     end
 end
 
@@ -100,12 +139,13 @@ results = table( ...
     repmat(phi_fixed, n_runs, 1), ...
     z_p_vals, w_p_vals, l_p_vals, x_p_vals, ...
     repmat(y_p_fixed, n_runs, 1), ...
-    S_out, R_out, status, error_message, ...
+    S_out, R_out, effect_co2eq, effect_profit, status, error_message, total_panels_out, ...
     'VariableNames', { ...
     'run_id', ...
     'sigma_level', 'z_p_level', 'w_p_level', 'l_p_level', 'x_p_level', ...
     'sigma_rad', 'phi_rad', 'z_p_m', 'w_p_m', 'l_p_m', 'x_p_m', 'y_p_m', ...
-    'total_co2eq_displaced', 'total_profit', 'status', 'error_message'});
+    'total_co2eq_displaced', 'total_profit', 'effect_co2eq', 'effect_profit', ...
+    'status', 'error_message', 'total_panels'});
 
 out_csv = fullfile(base_dir, 'doe_oa_l27_5factor_results.csv');
 writetable(results, out_csv);
@@ -115,3 +155,18 @@ out_csv_ts = fullfile(base_dir, ['doe_oa_l27_5factor_results_' timestamp '.csv']
 writetable(results, out_csv_ts);
 
 disp('OA DOE finished. Results written to simulink_model folder.');
+
+function v = local_last_numeric(x)
+if isempty(x)
+    error('total_panels was not found in simulation outputs.');
+end
+if isa(x, 'timeseries')
+    v = double(x.Data(end));
+elseif isnumeric(x)
+    v = double(x(end));
+elseif isstruct(x) && isfield(x, 'signals') && isfield(x.signals, 'values')
+    v = double(x.signals.values(end));
+else
+    error('Unsupported total_panels data type: %s', class(x));
+end
+end
