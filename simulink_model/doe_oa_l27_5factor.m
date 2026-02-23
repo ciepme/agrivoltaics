@@ -1,14 +1,14 @@
 %% Orthogonal Array DOE (L27) - 5 active factors
 % Fixed:
 %   phi = 0 rad (due south)
-%   y_p = 4.0 m
+%   z_p = 2.5 m
 %
 % Active factors (3 levels each):
-%   sigma [rad] : [0.35, 0.52, 0.70]
-%   z_p   [m]   : [2.0, 2.5, 3.0]
-%   w_p   [m]   : [0.9, 1.0, 1.1]
-%   l_p   [m]   : [1.8, 2.0, 2.2]
+%   l_p   [m]   : [1.2, 1.5, 1.8]
+%   y_p   [m]   : [3.5, 4.0, 4.5]
 %   x_p   [m]   : [0.05, 0.10, 0.15]
+%   w_p   [m]   : [0.9, 1.0, 1.1]
+%   sigma [deg] : [20, 35, 50]
 %
 % Output:
 %   CSV with run settings + emissions + profit
@@ -35,14 +35,14 @@ set_param(modelBase, 'InitFcn', '');
 init_cleanup = onCleanup(@() set_param(modelBase, 'InitFcn', origInitFcn)); %#ok<NASGU>
 
 % ---------- Factor levels ----------
-sigma_levels = [0.35, 0.52, 0.70];      % rad
-z_p_levels   = [2.0, 2.5, 3.0];         % m
-w_p_levels   = [0.9, 1.0, 1.1];         % m
-l_p_levels   = [1.8, 2.0, 2.2];         % m
-x_p_levels   = [0.05, 0.10, 0.15];      % m
+l_p_levels       = [1.2, 1.5, 1.8];     % m
+y_p_levels       = [3.5, 4.0, 4.5];     % m
+x_p_levels       = [0.05, 0.10, 0.15];  % m
+w_p_levels       = [0.9, 1.0, 1.1];     % m
+sigma_deg_levels = [20, 35, 50];        % deg
 
 phi_fixed = 0.0;   % rad
-y_p_fixed = 4.0;   % m
+z_p_fixed = 2.5;   % m
 
 % ---------- L27 OA index matrix (levels 1..3) ----------
 % Build a valid 27-run OA from three base 3-level columns and two
@@ -57,11 +57,12 @@ L = [c1, c2, c3, c4, c5];  % 27 x 5
 
 % Map OA indices to physical factor values.
 n_runs = size(L, 1);
-sigma_vals = sigma_levels(L(:,1)).';
-z_p_vals   = z_p_levels(L(:,2)).';
-w_p_vals   = w_p_levels(L(:,3)).';
-l_p_vals   = l_p_levels(L(:,4)).';
-x_p_vals   = x_p_levels(L(:,5)).';
+l_p_vals       = l_p_levels(L(:,1)).';
+y_p_vals       = y_p_levels(L(:,2)).';
+x_p_vals       = x_p_levels(L(:,3)).';
+w_p_vals       = w_p_levels(L(:,4)).';
+sigma_deg_vals = sigma_deg_levels(L(:,5)).';
+sigma_rad_vals = deg2rad(sigma_deg_vals);
 
 S_out = nan(n_runs, 1);
 R_out = nan(n_runs, 1);
@@ -72,13 +73,13 @@ error_message = strings(n_runs, 1);
 for i = 1:n_runs
     try
         % Apply OA scenario values.
-        var.PV.sigma = sigma_vals(i);
+        var.PV.sigma = sigma_rad_vals(i);
         var.PV.phi   = phi_fixed;
-        var.PV.z_p   = z_p_vals(i);
+        var.PV.z_p   = z_p_fixed;
         var.PV.w_p   = w_p_vals(i);
         var.PV.l_p   = l_p_vals(i);
         var.PV.x_p   = x_p_vals(i);
-        var.PV.y_p   = y_p_fixed;
+        var.PV.y_p   = y_p_vals(i);
 
         % Simulate and read outputs (same approach as housekeeping script).
         simOut = sim(modelName);
@@ -135,15 +136,15 @@ end
 results = table( ...
     (1:n_runs).', ...
     L(:,1), L(:,2), L(:,3), L(:,4), L(:,5), ...
-    sigma_vals, ...
+    sigma_deg_vals, sigma_rad_vals, ...
     repmat(phi_fixed, n_runs, 1), ...
-    z_p_vals, w_p_vals, l_p_vals, x_p_vals, ...
-    repmat(y_p_fixed, n_runs, 1), ...
+    repmat(z_p_fixed, n_runs, 1), ...
+    w_p_vals, l_p_vals, x_p_vals, y_p_vals, ...
     S_out, R_out, effect_co2eq, effect_profit, status, error_message, total_panels_out, ...
     'VariableNames', { ...
     'run_id', ...
-    'sigma_level', 'z_p_level', 'w_p_level', 'l_p_level', 'x_p_level', ...
-    'sigma_rad', 'phi_rad', 'z_p_m', 'w_p_m', 'l_p_m', 'x_p_m', 'y_p_m', ...
+    'l_p_level', 'y_p_level', 'x_p_level', 'w_p_level', 'sigma_level', ...
+    'sigma_deg', 'sigma_rad', 'phi_rad', 'z_p_m', 'w_p_m', 'l_p_m', 'x_p_m', 'y_p_m', ...
     'total_co2eq_displaced', 'total_profit', 'effect_co2eq', 'effect_profit', ...
     'status', 'error_message', 'total_panels'});
 

@@ -28,9 +28,9 @@ set_param(modelBase, 'InitFcn', '');
 init_cleanup = onCleanup(@() set_param(modelBase, 'InitFcn', origInitFcn)); %#ok<NASGU>
 
 % Factor order: [sigma_deg, phi_deg, z_p, w_p, l_p, x_p, y_p]
-low_vals = [10, -45, 1.5, 0.5, 0.5, 0.02, 2];
-nom_vals = [35,   0, 2.5, 1.0, 1.5, 0.10, 4];
-high_vals = [60, 45, 3.5, 1.5, 2.5, 0.25, 6];
+low_vals = [0, -45, 1, 0.5, 0.5, 0.02, 0.5];
+nom_vals = [45,   0, 2, 1.0, 1.0, 0.10, 1];
+high_vals = [90, 45, 3, 1.5, 1.5, 0.25, 4];
 factor_names = ["sigma_deg","phi_deg","z_p_m","w_p_m","l_p_m","x_p_m","y_p_m"];
 
 % 15-run OFAT matrix: nominal + low/high for each factor.
