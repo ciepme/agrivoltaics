@@ -1,7 +1,3 @@
-%% Clear
-clear;
-clc;
-
 %% Add Path
 
 addpath(genpath(pwd));
@@ -9,39 +5,39 @@ addpath(genpath(pwd));
 %%
 
 %open data dictionary busses
-data_dict = Simulink.data.dictionary.open('agrivoltaics_v1_data_dict.sldd');
-open_system("agrivoltaics_v1");
+% data_dict = Simulink.data.dictionary.open('agrivoltaics_v1_data_dict.sldd');
+% open_system("agrivoltaics_v1");
 
 
 %% 1. Parameter Definition (Fixed values)
 
 % Land parameters
-params.land.x = 50;       % length of base (m)
-params.land.y = 50;       % length of height (m)
-params.land.angle = 0;    % rotation (rad)
+agriParams.land.x = 50;       % length of base (m)
+agriParams.land.y = 50;       % length of height (m)
+agriParams.land.angle = 0;    % rotation (rad)
 
 % 2. Load the processed weather data from the .mat file
 weather_data = load('pv_inputs.mat'); 
 
 % 3. Assign the loaded data into parameter structure
-params.weather.DNI = weather_data.DNI;       
-params.weather.DHI = weather_data.DHI;       
-params.weather.beta_s = weather_data.beta_s; 
-params.weather.phi_s = weather_data.phi_s;
+agriParams.weather.DNI = weather_data.DNI;       
+agriParams.weather.DHI = weather_data.DHI;       
+agriParams.weather.beta_s = weather_data.beta_s; 
+agriParams.weather.phi_s = weather_data.phi_s;
 
 % PV parameters
-params.PV.n_p = 0.2;      % panel efficiency
+agriParams.PV.n_p = 0.2;      % panel efficiency
 
 % Crop & Econ parameters
-params.crop.elec_price = 0.5; 
-params.crop.crop_price = 14.46; %USD/kg
-params.crop.HI = 0.3; %this is harvest index, for raspberries it is roughly .3, so 30% of the plant weight is berries- changes based on crop choice
-params.crop.MC = .85; %this is moisture content, raspberries are about 85% water
-params.crop.RUE = 2.0; %radiation use efficiency, g of biomass per MJ of light, crop dependent
-params.crop.k =  0.65; %light extinction coefficient, crop dependent
-params.crop.LAI = 3.0; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
-params.crop.capital_cost = 1500; %USD per kW in net costs
-params.crop.payback_period = 20;
+agriParams.crop.elec_price = 0.5; 
+agriParams.crop.crop_price = 14.46; %USD/kg
+agriParams.crop.HI = 0.3; %this is harvest index, for raspberries it is roughly .3, so 30% of the plant weight is berries- changes based on crop choice
+agriParams.crop.MC = .85; %this is moisture content, raspberries are about 85% water
+agriParams.crop.RUE = 2.0; %radiation use efficiency, g of biomass per MJ of light, crop dependent
+agriParams.crop.k =  0.65; %light extinction coefficient, crop dependent
+agriParams.crop.LAI = 3.0; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
+agriParams.crop.capital_cost = 1500; %USD per kW in net costs
+agriParams.crop.payback_period = 20;
 
 % environmental parameters
 base_dir = fileparts(mfilename('fullpath'));
@@ -52,7 +48,7 @@ end
 data_dir = fullfile(base_dir,'parameterData');
 ci_avg_hourly = get_july1_hourly_carbon_intensity(data_dir);
 ci_July_1 = ci_avg_hourly; 
-params.env.ci_marginal_hourly_miso = ci_July_1;
+agriParams.env.ci_marginal_hourly_miso = ci_July_1;
 
 
 %% 2. Design Variables
@@ -68,7 +64,7 @@ var.PV.y_p = 1;           % row distance (m)
 var.PV.x_p = 0.1;         % panel distance (m)
 
 %% 3.Simulink Bus Objects
-Simulink.Bus.createObject(params);
+Simulink.Bus.createObject(agriParams);
 Simulink.Bus.createObject(var);
 
 % Rename the auto-generated buses to match your model ports
