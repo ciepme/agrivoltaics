@@ -3,15 +3,15 @@ function SF_hourly = calculate_shading(var, params)
     SF_hourly = zeros(24, 1);
     
     % 2. Extract parameters
-    PV_length = var.PV.l_p;
-    PV_width = var.PV.w_p;
-    PV_tilt = rad2deg(var.PV.sigma);    
-    PV_azimuth = rad2deg(var.PV.phi);   
-    PV_height = var.PV.z_p;
+    PV_length = var.PV_l_p;
+    PV_width = var.PV_w_p;
+    PV_tilt = rad2deg(var.PV_sigma);    
+    PV_azimuth = rad2deg(var.PV_phi);   
+    PV_height = var.PV_z_p;
     
-    row_distance = var.PV.y_p;
-    pair_distance = var.PV.x_p;
-    crop_azimuth = rad2deg(params.land.angle);
+    row_distance = var.PV_y_p;
+    pair_distance = var.PV_x_p;
+    crop_azimuth = rad2deg(params.land_angle);
 
     % 3. THE SPEED HACK: Define the "Unit Cell"
     % Instead of the whole farm, we look at the land for just ONE panel
@@ -24,8 +24,8 @@ function SF_hourly = calculate_shading(var, params)
     
     % 4. Loop through the 24-hour sun data
     for t = 1:24
-        sun_alt_deg = rad2deg(params.weather.beta_s(t));
-        sun_az_deg = rad2deg(params.weather.phi_s(t));
+        sun_alt_deg = rad2deg(params.weather_beta_s(t));
+        sun_az_deg = rad2deg(params.weather_phi_s(t));
         
         if sun_alt_deg > 0
             % Calculate shading for just this single unit cell!

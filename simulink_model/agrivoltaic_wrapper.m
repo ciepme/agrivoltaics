@@ -11,7 +11,7 @@ function results = agrivoltaic_wrapper(custom_var)
     custom_var_x_p = custom_var(8);
 
     %set standard variables
-    %load("agrivoltaics_variable_definition_data.mat");
+    load("agrivoltaics_variable_definition_data.mat");
 
     %set custom variables
     var.PV.z_p =    custom_var_z_p;         % panel height (m) 
