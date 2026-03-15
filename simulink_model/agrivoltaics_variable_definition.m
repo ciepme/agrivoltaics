@@ -30,7 +30,7 @@ agriParams.PV.n_p = 0.2;      % panel efficiency
 
 % Crop & Econ parameters
 agriParams.crop_elec_price = 0.5; 
-agriParams.crop_price = 14.46; %USD/kg
+agriParams.crop_price = 16.03; %USD/kg
 agriParams.crop_HI = 0.3; %this is harvest index, for raspberries it is roughly .3, so 30% of the plant weight is berries- changes based on crop choice
 agriParams.crop_MC = .85; %this is moisture content, raspberries are about 85% water
 agriParams.crop_RUE = 2.0; %radiation use efficiency, g of biomass per MJ of light, crop dependent
@@ -39,6 +39,7 @@ agriParams.crop_LAI = 3.0; %lead area index (sq meters of leaves per sq meter of
 agriParams.agrivoltaic_capital_cost_rate = 1500; %USD per kW in net costs
 agriParams.investigation_period = 20;
 agriParams.discount_rate = 0.07;
+agriParams.ongoing_OMcost = 18543.62;%ongoing cost of operations and maintenance for raspberries per acre
 
 % environmental parameters
 base_dir = fileparts(mfilename('fullpath'));
