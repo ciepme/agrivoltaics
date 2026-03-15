@@ -36,7 +36,7 @@ agriParams.crop_MC = .85; %this is moisture content, raspberries are about 85% w
 agriParams.crop_RUE = 2.0; %radiation use efficiency, g of biomass per MJ of light, crop dependent
 agriParams.crop_k =  0.65; %light extinction coefficient, crop dependent
 agriParams.crop_LAI = 3.0; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
-agriParams.crop_capital_cost = 1500; %USD per kW in net costs
+agriParams.agrivoltaic_capital_cost_rate = 1500; %USD per kW in net costs
 agriParams.crop_payback_period = 20;
 
 % environmental parameters
