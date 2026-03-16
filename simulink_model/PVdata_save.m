@@ -1,30 +1,51 @@
-%% Import Excel
-excelData = readtable('DHIDNI_Data.xls');
 
-DNI = excelData.DNI;
-DHI = excelData.DHI;
+weather_data = readtable('Weather_Data_AA.csv', 'HeaderLines', 2);
+spa_data = readtable('Spa_Data_AA.csv'); 
 
-Topocentric_zenith_angle = [128.98; 129.30; 126.01; 119.74; 111.34; 101.57; 90.97; ...
-                            79.88; 68.87; 58.16; 48.29; 40.16; 35.18; 34.80; 39.17; ...
-                            46.92; 56.60; 67.24; 78.26; 88.98; 100.10; 110.07; 118.78; 125.49];
+%parse SPA dats
+spa_dates = datetime(spa_data{:, 1});
+spa_months = month(spa_dates);
+spa_days = day(spa_dates);
 
-Topocentric_azimuth_angle = [168.86; 188.04; 206.37; 222.44; 236.04; 247.73; 258.22; ...
-                             268.25; 278.57; 290.08; 303.99; 321.92; 344.96; 11.00; 34.75; ...
-                             53.42; 67.83; 79.60; 90.02; 100.03; 110.39; 121.82; 135.08; 150.77];
+%target days of equinox and solstice
+target_days = [3, 21;   % Spring
+               6, 21;   % Summer
+               9, 21;   % Fall
+              12, 21];  % Winter
 
-% 2. Calculate beta_s (Altitude) in Radians
-% Logic: 90 degrees - Zenith
-beta_s = deg2rad(90 - Topocentric_zenith_angle);
+season_names = {'spring', 'summer', 'fall', 'winter'};
+weather_struct = struct(); % Initialize empty structure
 
-% 3. Calculate phi_s (Azimuth) in Radians
-% Logic: Negate the NREL value to switch from CW (Westward) to CCW (Eastward)
-phi_s = deg2rad(-Topocentric_azimuth_angle);
+%4 season loop
+for i = 1:4
+    m = target_days(i, 1);
+    d = target_days(i, 2);
+    curr_season = season_names{i};
+    
+    % --- MATCH TMY DATA ---
+    tmy_idx = (weather_data.Month == m) & (weather_data.Day == d);
+    day_weather = weather_data(tmy_idx, :);
+    
+    % --- MATCH SPA DATA ---
+    spa_idx = (spa_months == m) & (spa_days == d);
+    day_spa = spa_data(spa_idx, :); 
+    
+    % Pack the Weather Data
+    weather_struct.(curr_season).DNI = day_weather.DNI;
+    weather_struct.(curr_season).DHI = day_weather.DHI;
+    weather_struct.(curr_season).T_air = day_weather.Temperature;
+    weather_struct.(curr_season).Wind = day_weather.WindSpeed;
+    
+    % Pack the Geometry Data (Col 3 = Zenith, Col 4 = Azimuth)
+    zenith_deg = day_spa{:, 3}; 
+    spa_azimuth_deg = day_spa{:, 4}; 
+    
+    % Convert Zenith to Altitude (beta_s) in radians
+    weather_struct.(curr_season).beta_s = deg2rad(90 - zenith_deg);
+    
+    % Flipped by -1 to make East positive (Counter-Clockwise)
+    weather_struct.(curr_season).phi_s = deg2rad(-1 * spa_azimuth_deg);
+end
 
-%set hourly vector
-time_vector = [1:24]';
-
-
-
-%% Save .mat file
-save('pv_inputs.mat', ...
-     'DNI','DHI','beta_s','phi_s');
+%.mat file
+save('pv_weather_4seasons.mat', 'weather_struct');

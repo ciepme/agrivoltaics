@@ -20,12 +20,11 @@ agriParams.land_angle = 0;    % rotation (rad)
 load('pv_weather_4seasons.mat', 'weather_struct');
 agriParams.weather = weather_struct;
 
-% 3. Assign the loaded data into parameter structure (changed to seasonal
-% input with the weather_struct
-% agriParams.weather_DNI = weather_data.DNI;       
-% agriParams.weather_DHI = weather_data.DHI;       
-% agriParams.weather_beta_s = weather_data.beta_s; 
-% agriParams.weather_phi_s = weather_data.phi_s;
+% 3. Assign the loaded data into parameter structure
+agriParams.weather_DNI = weather_data.DNI;       
+agriParams.weather_DHI = weather_data.DHI;       
+agriParams.weather_beta_s = weather_data.beta_s; 
+agriParams.weather_phi_s = weather_data.phi_s;
 
 % PV parameters
 agriParams.PV.n_p = 0.2;      % panel efficiency
@@ -39,7 +38,6 @@ agriParams.crop_RUE = 2.0; %radiation use efficiency, g of biomass per MJ of lig
 agriParams.crop_k =  0.65; %light extinction coefficient, crop dependent
 %LAI for spring, summer, fall, winter
 agriParams.crop_LAI = [1.0, 3.0, 1.0, 0.0]; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
-
 agriParams.agrivoltaic_capital_cost_rate = 1500; %USD per kW in net costs
 agriParams.investigation_period = 20;
 agriParams.discount_rate = 0.07;
