@@ -39,7 +39,7 @@ agriParams.crop_LAI = 3.0; %lead area index (sq meters of leaves per sq meter of
 agriParams.agrivoltaic_capital_cost_rate = 1500; %USD per kW in net costs
 agriParams.investigation_period = 20;
 agriParams.discount_rate = 0.07;
-agriParams.ongoing_OMcost = 18543.62;%ongoing cost of operations and maintenance for raspberries per acre
+agriParams.ongoing_OMcost = 18543.62; %ongoing cost of operations and maintenance for raspberries per acre
 
 % environmental parameters
 base_dir = fileparts(mfilename('fullpath'));

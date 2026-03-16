@@ -1,5 +1,4 @@
-function results = agrivoltaic_wrapper(custom_var)
-
+function social_profit = agrivoltaic_social_cost_of_carbon_wrapper(custom_var)
     %parse custom_var
     custom_var_z_p = custom_var(1);
     custom_var_l_p = custom_var(2);
@@ -33,5 +32,8 @@ function results = agrivoltaic_wrapper(custom_var)
     %run sim
     out = sim(agriSim);
 
-    results = [out.e.Data, out.p.Data];
+    E = out.e.Data;
+    P = out.p.Data;
+
+    social_profit = P + 190 .* (E./1000);
 end
