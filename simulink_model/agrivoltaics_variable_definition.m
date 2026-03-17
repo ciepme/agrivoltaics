@@ -80,6 +80,7 @@ params_bus = slBus1;
 var_bus = slBus2; 
 
 %out = sim("agrivoltaics_v1.slx");
+save("agrivoltaics_variable_definition_data.mat")
 
 function ci_avg_hourly = get_july1_hourly_carbon_intensity(data_dir)
 emissions_2024 = readtable(fullfile(data_dir, ...
