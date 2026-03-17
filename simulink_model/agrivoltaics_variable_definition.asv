@@ -1,5 +1,5 @@
 %% Add Path
-
+clear
 addpath(genpath(pwd));
 
 %%
@@ -20,14 +20,16 @@ agriParams.land_angle = 0;    % rotation (rad)
 load('pv_weather_4seasons.mat', 'weather_struct');
 agriParams.weather = weather_struct;
 
-% 3. Assign the loaded data into parameter structure
-agriParams.weather_DNI = weather_data.DNI;       
-agriParams.weather_DHI = weather_data.DHI;       
-agriParams.weather_beta_s = weather_data.beta_s; 
-agriParams.weather_phi_s = weather_data.phi_s;
+% 3. Assign the loaded data into parameter structure (changed to seasonal
+% input with the weather_struct
+% agriParams.weather_DNI = weather_data.DNI;       
+% agriParams.weather_DHI = weather_data.DHI;       
+% agriParams.weather_beta_s = weather_data.beta_s; 
+% agriParams.weather_phi_s = weather_data.phi_s;
 
 % PV parameters
-agriParams.PV.n_p = 0.2;      % panel efficiency
+agriParams.PV_n_p = 0.2;      % panel efficiency
+agriParams.PV_psi = 0;        % field layout angle (rad)
 
 % Crop & Econ parameters
 agriParams.crop_elec_price = 0.5; 
@@ -38,6 +40,7 @@ agriParams.crop_RUE = 2.0; %radiation use efficiency, g of biomass per MJ of lig
 agriParams.crop_k =  0.65; %light extinction coefficient, crop dependent
 %LAI for spring, summer, fall, winter
 agriParams.crop_LAI = [1.0, 3.0, 1.0, 0.0]; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
+
 agriParams.agrivoltaic_capital_cost_rate = 1500; %USD per kW in net costs
 agriParams.investigation_period = 20;
 agriParams.discount_rate = 0.07;
@@ -49,21 +52,33 @@ base_dir = fileparts(mfilename('fullpath'));
 if isempty(base_dir) % in case there are issues with referencing the main dir
     base_dir = pwd;
 end
-data_dir = fullfile(base_dir,'parameterData');
-ci_avg_hourly = get_july1_hourly_carbon_intensity(data_dir);
-ci_July_1 = ci_avg_hourly; 
-agriParams.env_ci_marginal_hourly_miso = ci_July_1;
+data_dir = fullfile(base_dir, 'parameterData');
+
+% Note: January uses T0500 (EST, UTC-5); all other seasons use T0400 (EDT, UTC-4)
+ci_jan21 = get_season_hourly_ci(data_dir,'generated_emissions_MISO_20250121T0600_20250122T0459_co2_for_electricity_5m.csv');
+
+ci_mar21 = get_season_hourly_ci(data_dir,'generated_emissions_MISO_20250321T0400_20250322T0359_co2_for_electricity_5m.csv');
+
+ci_jun21 = get_season_hourly_ci(data_dir,'generated_emissions_MISO_20250621T0400_20250622T0359_co2_for_electricity_5m.csv');
+
+ci_sep21 = get_season_hourly_ci(data_dir, 'generated_emissions_MISO_20250921T0400_20250922T0359_co2_for_electricity_5m.csv');
+
+% Combine all seasons in order, starting from the first file passed
+% [96 x 1]
+ci_all_seasons = [ci_jan21 ci_mar21 ci_jun21 ci_sep21];
+
+agriParams.env_ci_marginal_hourly_miso = ci_all_seasons;
+
 
 
 %% 2. Design Variables
 
 % Panel layout variables
-agriVar.PV_z_p = 2;           % panel height (m) 
+agriVar.PV_z_p = 2;           % panel height (m)
 agriVar.PV_l_p = 1;           % panel length (m)
 agriVar.PV_w_p = 1;           % panel width (m)
 agriVar.PV_phi = 0;           % azimuth (rad)
 agriVar.PV_sigma = pi/4;      % tilt (rad)
-agriVar.PV_psi = 0;           % field layout angle (rad)
 agriVar.PV_y_p = 1;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
@@ -78,18 +93,13 @@ params_bus = slBus1;
 var_bus = slBus2; 
 
 %out = sim("agrivoltaics_v1.slx");
+save("agrivoltaics_variable_definition_data.mat")
 
-function ci_avg_hourly = get_july1_hourly_carbon_intensity(data_dir)
-emissions_2024 = readtable(fullfile(data_dir, ...
-    'generated_emissions_MISO_20240701T0400_20240702T0359_co2_for_electricity_5m.csv'));
-emissions_2025 = readtable(fullfile(data_dir, ...
-    'generated_emissions_MISO_20250701T0400_20250702T0359_co2_for_electricity_5m.csv'));
 
-ci_2024_5min = emissions_2024.total_co2_marginal_intensity_lbs_per_mwh;
-ci_2025_5min = emissions_2025.total_co2_marginal_intensity_lbs_per_mwh;
-ci_avg_5min = (ci_2024_5min + ci_2025_5min) / 2;
-
-% 12 five-minute points per hour --> 24 hourly vals
-ci_avg_hourly = mean(reshape(ci_avg_5min, 12, []), 1).'; % making this a matrix, transposing, and taking average of each col corresponding to each hour
-% disp(ci_avg_hourly); % lbs/MWh
+%% helper functions
+function ci_avg_hourly = get_season_hourly_ci(data_dir, file_season)
+    ci_data_season = readtable(fullfile(data_dir, file_season));
+    ci_season_day_5min = ci_data_season.total_co2_marginal_intensity_lbs_per_mwh;
+    % 12 five-minute points per hour --> 24 hourly vals--> in lbs/MWh
+    ci_avg_hourly = mean(reshape(ci_season_day_5min, 12, []), 1).';
 end
