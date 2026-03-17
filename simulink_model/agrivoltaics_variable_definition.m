@@ -1,5 +1,5 @@
 %% Add Path
-
+clear
 addpath(genpath(pwd));
 
 %%
