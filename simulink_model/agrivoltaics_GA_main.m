@@ -14,15 +14,15 @@ A = []; B = []; Aeq = []; Beq = [];
 constraint_min_struct.PV_z_p = 0;
 constraint_min_struct.PV_l_p = 0;
 constraint_min_struct.PV_w_p = 0;
-constraint_min_struct.PV_phi = -pi;
-constraint_min_struct.PV_sigma = -pi./2;
+constraint_min_struct.PV_phi = -pi./2;
+constraint_min_struct.PV_sigma = 0;
 constraint_min_struct.PV_y_p = 0;
 constraint_min_struct.PV_x_p = 0;
 
 constraint_max_struct.PV_z_p = 2;
 constraint_max_struct.PV_l_p = 2;
 constraint_max_struct.PV_w_p = 2;
-constraint_max_struct.PV_phi = pi;
+constraint_max_struct.PV_phi = pi./2;
 constraint_max_struct.PV_sigma = pi./2;
 constraint_max_struct.PV_y_p = 10;
 constraint_max_struct.PV_x_p = 10;
