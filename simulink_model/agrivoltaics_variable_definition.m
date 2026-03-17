@@ -28,7 +28,8 @@ agriParams.weather = weather_struct;
 % agriParams.weather_phi_s = weather_data.phi_s;
 
 % PV parameters
-agriParams.PV.n_p = 0.2;      % panel efficiency
+agriParams.PV_n_p = 0.2;      % panel efficiency
+agriParams.PV_psi = 0;        % field layout angle (rad)
 
 % Crop & Econ parameters
 agriParams.crop_elec_price = 0.5; 
@@ -60,12 +61,11 @@ agriParams.env_ci_marginal_hourly_miso = ci_July_1;
 %% 2. Design Variables
 
 % Panel layout variables
-agriVar.PV_z_p = 2;           % panel height (m) 
+agriVar.PV_z_p = 2;           % panel height (m)
 agriVar.PV_l_p = 1;           % panel length (m)
 agriVar.PV_w_p = 1;           % panel width (m)
 agriVar.PV_phi = 0;           % azimuth (rad)
 agriVar.PV_sigma = pi/4;      % tilt (rad)
-agriVar.PV_psi = 0;           % field layout angle (rad)
 agriVar.PV_y_p = 1;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
