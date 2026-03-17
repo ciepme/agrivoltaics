@@ -1,5 +1,5 @@
 function array = agriVarStruct2Array(AgriVar)
-    array = ones(1,8);
+    array = ones(1,7);
     
     array(1) = AgriVar.PV_z_p;
     array(2) = AgriVar.PV_l_p;
