@@ -44,7 +44,13 @@ agriParams.crop_LAI = [1.0, 3.0, 1.0, 0.0]; %lead area index (sq meters of leave
 agriParams.agrivoltaic_capital_cost_rate = 1500; %USD per kW in net costs
 agriParams.investigation_period = 20;
 agriParams.discount_rate = 0.07;
-agriParams.ongoing_OMcost = 18543.62; %ongoing cost of operations and maintenance for raspberries per acre
+
+agriParams.year0_cost=402.89;%year 0 planning costs per acre
+agriParams.year1_cost=12229.19;%year 1 planting costs per acre
+agriParams.year2_cost=2943.4;%year 2 low yield establishment costs per acre
+agriParams.startup_years=3;%number of startup years for raspberries prior to steady state production
+
+agriParams.ongoing_OMcost = 18543.62; %ongoing cost of operations and maintenance (post startup years) for raspberry growing per acre
 
 % environmental parameters
 base_dir = fileparts(mfilename('fullpath'));
