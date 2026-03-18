@@ -30,6 +30,7 @@ agriParams.weather = weather_struct;
 % PV parameters
 agriParams.PV_n_p = 0.2;      % panel efficiency
 agriParams.PV_psi = 0;        % field layout angle (rad)
+agriParams.PV_startup_period=1; %years spent creating the solar array
 
 % Crop & Econ parameters
 agriParams.crop_elec_price = 0.5; 
