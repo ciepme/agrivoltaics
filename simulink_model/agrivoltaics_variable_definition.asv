@@ -8,15 +8,14 @@ addpath(genpath(pwd));
 % data_dict = Simulink.data.dictionary.open('agrivoltaics_v1_data_dict.sldd');
 % open_system("agrivoltaics_v1");
 
-%% Variable Bound Definition
-% (1) = PV_z_p; panel height above the ground (m)
-% (2) = PV_l_p; panel length (m)
-% (3) = PV_w_p; panel width (m)
-% (4) = PV_phi; azimuth angle (radians) - relative to true South, going ccw e.g. pi/2 rad is East
-% (5) = PV_sigma; tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane
-% (6) = PV_y_p; Distance between rows (m)
-% (7) = PV_x_p; Distance between panels in a pair/row (m)
-% Order: [Height, Length, Width, Azimuth, Tilt, Row Gap, Panel Gap]
+%% Bound Definition
+%(1) = PV_z_p;
+% (2) = PV_l_p;
+% (3) = AgriVar.PV_w_p;
+% (4) = AgriVar.PV_phi;
+% (5) = AgriVar.PV_sigma;
+% (6) = AgriVar.PV_y_p;
+% (7) = AgriVar.PV_x_p;
 lb = [2.5, 1.0, 1.0, -pi/2, 0,    2.5,  0.1]; 
 ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
 %% 1. Parameter Definition (Fixed values)
@@ -108,7 +107,7 @@ params_bus = slBus1;
 var_bus = slBus2; 
 
 %out = sim("agrivoltaics_v1.slx");
-% save("agrivoltaics_variable_definition_data.mat")
+save("agrivoltaics_variable_definition_data.mat")
 
 
 %% helper functions

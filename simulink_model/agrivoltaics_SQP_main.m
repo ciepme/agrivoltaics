@@ -1,19 +1,12 @@
+
 clear;
 clc;
+rng default;
 
-load("agrivoltaics_variable_definition_data.mat", "agriVar");
+agrivoltaics_variable_definition;
+
 x0 = agriVarStruct2Array(agriVar); %initial guess pulled from variable definition file
-%     array(1) = AgriVar.PV_z_p;
-%     array(2) = AgriVar.PV_l_p;
-%     array(3) = AgriVar.PV_w_p;
-%     array(4) = AgriVar.PV_phi;
-%     array(5) = AgriVar.PV_sigma;
-%     array(6) = AgriVar.PV_y_p;
-%     array(7) = AgriVar.PV_x_p;
-% lower and upper bounds definition (make sure corresponds with the array
-% Also enforcing your max height of 2m directly here (no need for a custom constraint function!)
-lb = [1.5, 0, 0, -pi/2, 0,    2.0,  0.1]; 
-ub = [4, 2.0, 2.0,  pi/2, pi/2, 10.0, 1.0];
+
 
 
 options = optimoptions('fmincon','Algorithm', 'sqp','Display', 'iter','StepTolerance', 1e-6,'OptimalityTolerance', 1e-6);
