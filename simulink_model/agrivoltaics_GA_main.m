@@ -10,6 +10,7 @@ load("agrivoltaics_variable_definition_data.mat");
 
 % Set Up GA
 A = []; B = []; Aeq = []; Beq = [];
+nlcon = [];
 
 constraint_min_struct.PV_z_p = 0;
 constraint_min_struct.PV_l_p = 0;
@@ -30,7 +31,11 @@ constraint_max_struct.PV_x_p = 10;
 constraint_min = agriVarStruct2Array(constraint_min_struct);
 constraint_max = agriVarStruct2Array(constraint_max_struct);
 
+% set options
+options = optimoptions('ga', 'MaxGenerations', 40);
+
 % Run GA
 [ga_solve,fval,exitflag,output,population,scores] = ...
     ga(@agrivoltaic_social_cost_of_carbon_wrapper, ...
-    7, A, B, Aeq, Beq, constraint_min, constraint_max);
+    7, A, B, Aeq, Beq, constraint_min, constraint_max, ...
+    nlcon, options);
