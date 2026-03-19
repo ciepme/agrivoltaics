@@ -63,6 +63,14 @@ agriParams.startup_years=3;%number of startup years for raspberries prior to ste
 
 agriParams.ongoing_OMcost = 18543.62; %ongoing cost of operations and maintenance (post startup years) for raspberry growing per acre
 
+% additions for microclimate
+agriParams.crop_PAR_frac = 0.48; % portion of sunlight usable for photosynthesis--> changed to 0.48 from 0.45 (from more recent study)
+agriParams.crop_T_base = 5; % all temps in celcius --> below this temp raspberries can't grow
+agriParams.crop_T_opt = 20; % this is the optimal temperature for raspberry growth
+agriParams.crop_T_max = 30; % about the max temp that raspberries can  grow at
+agriParams.crop_c_T = 1.5; % degrees celcius per unit SF--> for quantifying how much shading factor decreases temp of crop relative to the T_air
+
+
 % environmental parameters
 base_dir = fileparts(mfilename('fullpath'));
 
