@@ -14,7 +14,7 @@ addpath(genpath(pwd));
 % (3) = PV_w_p; panel width (m)
 % (4) = PV_phi; azimuth angle (radians) - relative to true South, going ccw e.g. pi/2 rad is East
 % (5) = PV_sigma; tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane
-% (6) = PV_y_p; Distance between rows (m)
+% (6) = PV_y_p; Distance between rows (m) of panels
 % (7) = PV_x_p; Distance between panels in a pair/row (m)
 % Order: [Height, Length, Width, Azimuth, Tilt, Row Gap, Panel Gap]
 lb = [2.5, 1.0, 1.0, -pi/2, 0,    2.5,  0.1]; 
@@ -47,7 +47,7 @@ agriParams.crop_elec_price = 0.5;
 agriParams.crop_price = 16.03; %USD/kg
 agriParams.crop_HI = 0.3; %this is harvest index, for raspberries it is roughly .3, so 30% of the plant weight is berries- changes based on crop choice
 agriParams.crop_MC = .85; %this is moisture content, raspberries are about 85% water
-agriParams.crop_RUE = 2.0; %radiation use efficiency, g of biomass per MJ of light, crop dependent
+agriParams.crop_RUE = 1.0; %can't find specific data for rasperries--> 1.0 is a typical RUE for tomatoes and lettuce
 agriParams.crop_k =  0.65; %light extinction coefficient, crop dependent
 %LAI for spring, summer, fall, winter
 agriParams.crop_LAI = [1.0, 3.0, 1.0, 0.0]; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
@@ -68,8 +68,9 @@ agriParams.crop_PAR_frac = 0.48; % portion of sunlight usable for photosynthesis
 agriParams.crop_T_base = 5; % all temps in celcius --> below this temp raspberries can't grow
 agriParams.crop_T_opt = 20; % this is the optimal temperature for raspberry growth
 agriParams.crop_T_max = 30; % about the max temp that raspberries can  grow at
-agriParams.crop_c_T = 1.5; % degrees celcius per unit SF--> for quantifying how much shading factor decreases temp of crop relative to the T_air
-
+agriParams.crop_c_T = 2.5; % degrees celcius per unit SF--> conflicting data for this--> could be anywhere from 1.5 to 3.7 deg celcius
+agriParams.crop_GCF = 0.3; % Ground Cover Fraction --> the portion of the plot that is actually covered my raspberries (calc. from Penn State metrics for open field red raspberries)
+% reasonable GCF range --> [0.15-0.5]
 
 % environmental parameters
 base_dir = fileparts(mfilename('fullpath'));

@@ -7,6 +7,8 @@ function annual_biomass = calculate_crop_growth(SF_spring, SF_summer, SF_fall, S
   T_max = agriParams.crop_T_max;
   c_T  = agriParams.crop_c_T;
   PAR_frac = agriParams.crop_PAR_frac;
+  GCF = agriParams.crop_GCF;
+
   days_per_season = 91.25;
    %  Seasonal Leaf Area Index (LAI)
   LAI_spring = agriParams.crop_LAI(1);
@@ -15,10 +17,10 @@ function annual_biomass = calculate_crop_growth(SF_spring, SF_summer, SF_fall, S
   LAI_winter = agriParams.crop_LAI(4);
    %  Calculate Daily Biomass for each representative day
   % calls daily function from the bottom
-  daily_spring = calc_daily_growth(agriParams.weather.spring, SF_spring, LAI_spring, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac);
-  daily_summer = calc_daily_growth(agriParams.weather.summer, SF_summer, LAI_summer, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac);
-  daily_fall   = calc_daily_growth(agriParams.weather.fall, SF_fall, LAI_fall, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac);
-  daily_winter = calc_daily_growth(agriParams.weather.winter, SF_winter, LAI_winter, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac);
+  daily_spring = calc_daily_growth(agriParams.weather.spring, SF_spring, LAI_spring, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac, GCF);
+  daily_summer = calc_daily_growth(agriParams.weather.summer, SF_summer, LAI_summer, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac, GCF);
+  daily_fall   = calc_daily_growth(agriParams.weather.fall, SF_fall, LAI_fall, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac, GCF);
+  daily_winter = calc_daily_growth(agriParams.weather.winter, SF_winter, LAI_winter, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac, GCF);
    % 4. Scale up to the full year
   annual_biomass = (daily_spring * days_per_season) + ...
                    (daily_summer * days_per_season) + ...
@@ -26,7 +28,7 @@ function annual_biomass = calculate_crop_growth(SF_spring, SF_summer, SF_fall, S
                    (daily_winter * days_per_season);
 end
 % original daily growth calculation
-function daily_biomass = calc_daily_growth(weather_season, SF_season, LAI, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac)
+function daily_biomass = calc_daily_growth(weather_season, SF_season, LAI, RUE, k, c_T, T_base, T_opt, T_max, PAR_frac, GCF)
    daily_biomass = 0;
    % Loop through the 24 hours of this specific season
   for t = 1:24
@@ -46,7 +48,7 @@ function daily_biomass = calc_daily_growth(weather_season, SF_season, LAI, RUE, 
           % Changing: convert to PAR in MJ/m²/hr
           PAR_MJ = R_actual * 0.0036 * PAR_frac;
           % Beer-Lambert interception eq
-          APAR = PAR_MJ * (1 - exp(-k * LAI)); % absorbed PAR
+          APAR = PAR_MJ * GCF * (1 - exp(-k * LAI)); % absorbed PAR
         
           % adding microclimate temp--> depends on the shading factor
           % T_crop = T_air - c_T * 0; % testing shading having no impact
