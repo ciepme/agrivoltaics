@@ -50,7 +50,7 @@ agriParams.crop_MC = .85; %this is moisture content, raspberries are about 85% w
 agriParams.crop_RUE = 1.0; %can't find specific data for rasperries--> 1.0 is a typical RUE for tomatoes and lettuce
 agriParams.crop_k =  0.65; %light extinction coefficient, crop dependent
 %LAI for spring, summer, fall, winter
-agriParams.crop_LAI = [1.0, 3.0, 1.0, 0.0]; %lead area index (sq meters of leaves per sq meter of ground, crop dependent
+agriParams.crop_LAI = [1.0, 3.0, 1.0, 0.0]; %leaf area index (sq meters of leaves per sq meter of ground, crop dependent
 
 agriParams.agrivoltaic_capital_cost_rate = 1500; %USD per kW in net costs
 agriParams.investigation_period = 20;
@@ -98,12 +98,12 @@ clear ci_jan21 ci_sep21 ci_jun21 ci_mar21 ci_all_seasons;
 %% 2. Design Variables
 
 % Panel layout variables
-agriVar.PV_z_p = 2;           % panel height (m)
-agriVar.PV_l_p = 1;           % panel length (m)
-agriVar.PV_w_p = 1;           % panel width (m)
-agriVar.PV_phi = 0;           % azimuth (rad)
-agriVar.PV_sigma = pi/4;      % tilt (rad)
-agriVar.PV_y_p = 1;           % row distance (m)
+agriVar.PV_z_p = 4.43;           % panel height (m)
+agriVar.PV_l_p = 2.46;           % panel length (m)
+agriVar.PV_w_p = 1.37;           % panel width (m)
+agriVar.PV_phi = .28;           % azimuth (rad)
+agriVar.PV_sigma = 1.12;      % tilt (rad)
+agriVar.PV_y_p = 2.5;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
 %% 3.Simulink Bus Objects
