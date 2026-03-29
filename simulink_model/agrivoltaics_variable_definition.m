@@ -106,18 +106,19 @@ agriVar.PV_sigma = 1.12;      % tilt (rad)
 agriVar.PV_y_p = 2.5;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
-%% 3.Simulink Bus Objects
-agriParams_bus = Simulink.Bus.createObject(agriParams);
-agriVar_bus = Simulink.Bus.createObject(agriVar);
+%% 3. Simulink Bus Objects
+% Create the bus for parameters (this creates the top bus AND the weather sub-buses)
+info_1 = Simulink.Bus.createObject(agriParams);
+params_bus = eval(info_1.busName); % Extract the text name (like 'slBus1') and save it
+clear(info_1.busName); % Delete the original 'slBus1' so it doesn't clutter things
 
-% Rename the auto-generated buses to match your model ports
-% createObject makes 'slBus1', 'slBus2' etc. We need to rename them.
+% Create the bus for variables
+info_2 = Simulink.Bus.createObject(agriVar);
+var_bus = eval(info_2.busName);
+clear(info_2.busName);
 
-params_bus = slBus1; 
-var_bus = slBus2; 
-
-%out = sim("agrivoltaics_v1.slx");
-% save("agrivoltaics_variable_definition_data.mat")
+% Clean up the temporary info structs
+clear info_1 info_2;
 
 
 %% helper functions
