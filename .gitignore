@@ -7,3 +7,4 @@ simulink_model/.DS_Store
 simulink_model/.DS_Store
 simulink_model/slprj/sim/varcache/agrivoltaics_v1/varInfo.mat
 simulink_model/slprj/sim/varcache/agrivoltaics_v1/varInfo.mat
+*.asv

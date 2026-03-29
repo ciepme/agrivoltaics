@@ -19,7 +19,19 @@ addpath(genpath(pwd));
 % Order: [Height, Length, Width, Azimuth, Tilt, Row Gap, Panel Gap]
 lb = [2.5, 1.0, 1.0, -pi/2, 0,    2.5,  0.1]; 
 ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
-%% 1. Parameter Definition (Fixed values)
+
+%% Tracking System Definition (Fixed vs Single Axis)
+% 0 = Fixed Axis, 1 = Single-Axis Tracking 
+agriParams.tracking_mode = 1; 
+
+% Max rotation angle for the single-axis tracker (mechanical limit before
+% hitting motor housing or sturcture
+agriParams.PV_max_tilt = 60 * (pi/180); % Convert degrees to radians
+
+% tracking angles for optimizer matrix definition
+% 4x24 matrix (4 seasons, 24 hours). 
+agriVar.tracking_angles = zeros(4, 24);
+%% Parameter Definition (Fixed values)
 
 % Land parameters
 agriParams.land_x = 50;       % length of base (m)
@@ -95,7 +107,7 @@ clear ci_jan21 ci_sep21 ci_jun21 ci_mar21 ci_all_seasons;
 
 
 
-%% 2. Design Variables
+%% Design Variables
 
 % Panel layout variables
 agriVar.PV_z_p = 4.43;           % panel height (m)
@@ -106,18 +118,39 @@ agriVar.PV_sigma = 1.12;      % tilt (rad)
 agriVar.PV_y_p = 2.5;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
-%% 3. Simulink Bus Objects
-% Create the bus for parameters (this creates the top bus AND the weather sub-buses)
+%% if single-axis tracking, set bounds + physics-based initialization
+if agriParams.tracking_mode == 1
+    
+    % Create bounds for 96 tracking variables
+    tracking_lb = zeros(1, 96); 
+    tracking_ub = ones(1, 96) * agriParams.PV_max_tilt; 
+    
+    % Append to existing bounds
+    lb = [lb, tracking_lb]; 
+    ub = [ub, tracking_ub]; 
+
+    % Physics-based initialization
+    agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
+
+else
+    % Required for Simulink bus consistency
+    agriVar.tracking_angles = zeros(4,24);
+end
+%%  Simulink Bus Objects
+agriParams = orderfields(agriParams);
+agriVar    = orderfields(agriVar);
+
+% Create the bus for parameters
 info_1 = Simulink.Bus.createObject(agriParams);
-params_bus = eval(info_1.busName); % Extract the text name (like 'slBus1') and save it
-clear(info_1.busName); % Delete the original 'slBus1' so it doesn't clutter things
+params_bus = eval(info_1.busName); 
+clear(info_1.busName); 
 
 % Create the bus for variables
 info_2 = Simulink.Bus.createObject(agriVar);
 var_bus = eval(info_2.busName);
 clear(info_2.busName);
 
-% Clean up the temporary info structs
+% Clean up
 clear info_1 info_2;
 
 
@@ -128,3 +161,5 @@ function ci_avg_hourly = get_season_hourly_ci(data_dir, file_season)
     % 12 five-minute points per hour --> 24 hourly vals--> in lbs/MWh
     ci_avg_hourly = mean(reshape(ci_season_day_5min, 12, []), 1).';
 end
+
+

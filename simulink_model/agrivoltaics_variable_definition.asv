@@ -19,7 +19,19 @@ addpath(genpath(pwd));
 % Order: [Height, Length, Width, Azimuth, Tilt, Row Gap, Panel Gap]
 lb = [2.5, 1.0, 1.0, -pi/2, 0,    2.5,  0.1]; 
 ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
-%% 1. Parameter Definition (Fixed values)
+
+%% Tracking System Definition (Fixed vs Single Axis)
+% 0 = Fixed Axis, 1 = Single-Axis Tracking 
+agriParams.tracking_mode = 1; 
+
+% Max rotation angle for the single-axis tracker (mechanical limit before
+% hitting motor housing or sturcture
+agriParams.PV_max_tilt = 60 * (pi/180); % Convert degrees to radians
+
+% tracking angles for optimizer matrix definition
+% 4x24 matrix (4 seasons, 24 hours). 
+agriVar.tracking_angles = zeros(4, 24);
+%% Parameter Definition (Fixed values)
 
 % Land parameters
 agriParams.land_x = 50;       % length of base (m)
@@ -95,7 +107,7 @@ clear ci_jan21 ci_sep21 ci_jun21 ci_mar21 ci_all_seasons;
 
 
 
-%% 2. Design Variables
+%% Design Variables
 
 % Panel layout variables
 agriVar.PV_z_p = 4.43;           % panel height (m)
@@ -106,20 +118,19 @@ agriVar.PV_sigma = 1.12;      % tilt (rad)
 agriVar.PV_y_p = 2.5;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
-%% 3.Simulink Bus Objects
-%% 3. Simulink Bus Objects
-% Create the bus for parameters and grab whatever name MATLAB randomly assigns it
-temp_name_1 = Simulink.Bus.createObject(agriParams);
-params_bus = eval(temp_name_1); % Save it safely as params_bus
-clear(temp_name_1); % Delete the randomly named temporary bus
+%%  Simulink Bus Objects
+% Create the bus for parameters (this creates the top bus AND the weather sub-buses)
+info_1 = Simulink.Bus.createObject(agriParams);
+params_bus = eval(info_1.busName); % Extract the text name (like 'slBus1') and save it
+clear(info_1.busName); % Delete the original 'slBus1' so it doesn't clutter things
 
-% Create the bus for variables and grab its name
-temp_name_2 = Simulink.Bus.createObject(agriVar);
-var_bus = eval(temp_name_2); % Save it safely as var_bus
-clear(temp_name_2); % Delete the temporary bus
+% Create the bus for variables
+info_2 = Simulink.Bus.createObject(agriVar);
+var_bus = eval(info_2.busName);
+clear(info_2.busName);
 
-% Clean up the temp name variables so the workspace is neat
-clear temp_name_1 temp_name_2;
+% Clean up the temporary info structs
+clear info_1 info_2;
 
 
 %% helper functions
