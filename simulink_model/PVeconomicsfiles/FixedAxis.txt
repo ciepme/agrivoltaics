@@ -1,0 +1,194 @@
+Program.Name=PVSCM
+Program.Date=10/22/2024
+System.Size=297.93
+System.Unit=kWdc
+System.Description=1.5 - 6 MWdc ground mount fixed tilt racking. site suitable for sheet grazing
+2-hour system battery energy storage
+2023 USD (CPI-U=304.7)
+System.MSPcomment=PV Benchmark Range:     $1172 - $1461            PV+ESS Range:          $1728 - $2365
+System.MMPcomment=PV Benchmark Range:     $1358 - $1625            PV+ESS Range:         $2078 - $2651
+System.Module=Avg. Sales Price\=ModuleUnit\=ModuleMSP\1\=ModuleMMP\\
+System.Inverter=Avg. Sales Price\=InverterUnit\=InverterMSP\=1/ILR\=InverterMMP\\
+System.ESS=Energy Storage\=ESSUnit\=ESSMSP\=StorageDuration\=ESSMMP\\E
+System.SBOS=Structural BOS\=SBOSUnit\=SBOSMSP\=1/ModuleEfficiency\=SBOSMMP\\
+System.EBOS=Electrical BOS\=EBOSUnit\=EBOSMSP\=1/ILR\=EBOSMMP\\
+System.Fieldwork=Labor&Related\=FieldworkUnit\=FieldworkMSP\=1/ModuleEfficiency\=FieldworkMMP\\
+System.Officework=Labor&Related\=OfficeworkUnit\=OfficeworkMSP\1\=OfficeworkMMP\\I
+System.Other=Financial, etc.\=OtherUnit\=OtherMSP\1\=OtherMMP\\I
+Module.Size=1500000
+Module.Unit=kWdc
+Module.Description=Bifacial c-Si module assembled in SE Asia using cells from SE Asia
+Components and assembly labor are direct costs, other costs are indirect
+Module.MSPcomment=Benchmark Range:     $211 - $289
+Module.MMPcomment=Benchmark Range:     $334 - $340
+Module.Cells=\kWdc\115\=1/CellToModule\130\Distortion: Increased market price related to UFLPA compliance is decreasing with time\
+Module.Frame=\m\1.5\=2*(ModuleWidth+ModuleHeight)/(ModuleWidth*ModuleHeight*ModuleEfficiency)\\\
+Module.Front/Backsheets=\m2\7.7\=1/ModuleEfficiency\\35% for 2.0 mm front glass, 35% for 2.0 mm rear glass, 30% for two sheets of POE encapsulant\
+Module.Other Material=\module\6.3\=1/(ModuleEfficiency*ModuleHeight*ModuleWidth)\\28% J-box, 7% edge seals, 5% pottants, 4% adhesives, 44% ribbons, 12% bypass diodes\
+Module.Labor=700000\hour\3\=ModuleLabor/ModuleEfficiency\\Fixed: Salaried personnel.  Hourly includes benefits/burden.\
+Module.Electricity=\kWh\0.06\=ModuleElectricity/ModuleEfficiency\\Fixed: Power for portion of facility that's independent of annual production\I
+Module.Depreciation=\kWdc/yr\45\=ModuleDepreciation\\Depreciation of facility capex estimatd to cost $45M per annual GW of capacity\I
+Module.Maintenance=\kWdc\1.8\1\\Maintenance of facility capex estimated at 4% of facility capex per year\I
+Module.Profit=\kWdc\=(D16+SUM(F10:F17)/4)*ModuleProfitMSP\1\=ModuleMarketPrice-SUM(H10:H17,H19:H21)\Distortion: Profit adjusted to match MMP to observed market price of $336/kWdc\I
+Module.Shipping=\kg\0.6\=ModuleWeight/ModuleEfficiency\\Profiled overseas shipping from Panang, pick up at the port of Long Beach, and shipping 750 miles\I
+Inverter.Size=1000000
+Inverter.Unit=kWac
+Inverter.Description=Chinese three-phase string inverter
+Components and assembly labor are direct costs, other costs are indirect
+Inverter.MSPcomment=Benchmark Range:     $35 - $104
+Inverter.MMPcomment=Benchmark Range:     $53 - $120
+Inverter.PCB Assemblies=\kWac\16\1\\Printed circuit board assemblies with components mounted\
+Inverter.Electrical Parts=\kWac\7.7\1\\Discrete capacitors, inductors, cables, circuit protection\
+Inverter.Climate Control=\kWac\3.3\1\\\
+Inverter.Enclosure=\kWac\7.5\1\\Enclosure assembly, packaging\
+Inverter.Labor=350000\hour\16\=InverterLabor\\Fixed: Salaried supervisory personnel\
+Inverter.Electricity=\kWh\0.08\=InverterElectricity\\\I
+Inverter.Depreciation=\kWac/yr\6\=InverterDepreciation\\Facility capex estimated at $6M per GWac of annual capacity\I
+Inverter.Maintenance=\kWac\0.24\1\\Maintenance of facility capex estimated at 4% per year\I
+Inverter.Profit=\kWac\=(D16+SUM(F10:F17)/4)*InverterProfitMSP\1\=(InverterMarketPrice-H19)/(1+Tariff301)-SUM(H10:H17)\Distortion: Profit adjusted to match MMP to observed market price of $75/kWac\I
+Inverter.Shipping=\kg\30\=InverterWeight\\\I
+Inverter.Tariff=\kWac\\1\=SUM(H10:H18)*Tariff301\Distortion: Section 301 tariff paid by importer\I
+ESS.Size=1000000
+ESS.Unit=kWh-cap
+ESS.Description=Domestically assembled 3 MWh-cap, 1 MWac, ac-coupled pad-mounted battery cabinets
+Components and on-site assembly labor are direct cost, other costs are indirect
+ESS.MSPcomment=Benchmark Range:     $148 - $272
+ESS.MMPcomment=Benchmark Range:     $188 - $350
+ESS.Li-Ion Cells=\kWh-cap\75\1\=D10*(1+0.034+Tariff301)\LFP cells from China. Distortion: 301 tariff and 3.4% general duty\
+ESS.Battery Packs=\kWh-cap\25\1\\70% battery management, 30% thermal management\
+ESS.Enclosure=\kWh-cap\20\1\\Container, racks, fire suppression\
+ESS.AC-DC Converter=\kWac\90\=1/( BatteryDuration* ESS_ILR)\\30% PCBAs, 10% Electrical Parts, 10% Climate Control, 10% Enclosure, 40% Domestic Production\
+ESS.Labor=2200000\hour\34\= ESSLabor\\Fixed: Salaried supervisory personnel\
+ESS.Electricity=\kWh\0.08\=ESSElectricity\\Representative U.S. rate for commercial loads in Q1 2024\I
+ESS.Depreciation=\kWh-cap/yr\7\=ESSDepreciation\\Estimated facility capex of $7M per annual GWh of ESS capacity\I
+ESS.Maintenance=\kWh-cap\0.28\1\\Maintenance of facility capex estimated at 4% per year\I
+ESS.Profit=\kWh-cap\=(D16+SUM(F10:F17)/4)*ESSProfitMSP\1\=ESSMarketPrice-SUM(H10:H17,H19:H21)\Distortion: Profit adjusted  to match MMP to observed market price of $228/kWh-cap\I
+ESS.Shipping=\kg\1\=ESSWeight\\\I
+ESS.Passthrough=\kWh-cap\\1\=D20-0.5*Battery45X\Distortion: Half of 45X used to decrease price to improve competitiveness\I
+SBOS.Size==SystemSize/ModuleEfficiency
+SBOS.Unit=m2
+SBOS.Description=Fixed-tilt groung mount system using domestic components
+Components are direct costs, Shipping and ESS Pad are indirect costs
+SBOS.MSPcomment=PV Benchmark Range:     $28 - $47            PV+ESS Range:          $30 - $49
+SBOS.MMPcomment=PV Benchmark Range:     $28 - $48            PV+ESS Range:         $31 - $50
+SBOS.Torque Tubes=\kg\2.5\=TorqueTubeWeight\\Galvanized steel non-tracking torque tubes\
+SBOS.Driven Piers=\pier\200\=PiersPerRow/(RowLength*ModuleHeight)\\W6x9 or Standard W8 Galvanized I or C Steel Beams\
+SBOS.Module Rails=\m\2.1\=1/ModuleWidth\=D12*(1+Tariff301)\12' to 16' rails from China. Distortion: Section 301 tariff\
+SBOS.Fasteners=\kg\2.2\=FastenerWeight\=D13*(1+Tariff301)\End, HL and Center clamps; Washers & screws. Distortion: Section 301 tariff\
+SBOS.Shipping=\kg\0.6\=IncludeIndirect*SBOSshippingWeight\\\I
+SBOS.ESS Pad=\kWh-cap\6\=IncludeIndirect*IncludeESS*StorageDuration*ModuleEfficiency\\\EI
+EBOS.Size==SystemSize/ILR
+EBOS.Unit=kWac
+EBOS.Description=Electrical system components appropriate for a field array connected to a distribution grid
+All hardware costs are direct cost. The substation pad and shipping are indirect
+EBOS.MSPcomment=PV Benchmark Range:     $245 - $245            PV+ESS Range:          $245 - $245
+EBOS.MMPcomment=PV Benchmark Range:     $260 - $260            PV+ESS Range:         $260 - $260
+EBOS.Transformers=\kWac\90\1\\Assume 3.5 MVA step up to 11kV\
+EBOS.Circuit Breaker=\kWac\30\1\=D11*(1+Tariff301)\Disconnects and fuses from China. Distortion: Section 301 tariff\
+EBOS.Conductors=\kWac\60\1\\4mm and 240mm cables\
+EBOS.Grounding=\kWac\25\1\\Grounding cables, surge protection device\
+EBOS.Combiner Boxes=\kWac\30\1\=D14*(1+Tariff301)\1000V combiner box from China. Distortion: Section 301 tariff\
+EBOS.Substation Pad=\kWac\15\=IncludeIndirect*1\\\I
+EBOS.Shipping=\kg\0.5\=IncludeIndirect*EBOSweight\\\I
+Fieldwork.Size==SystemSize/ModuleEfficiency
+Fieldwork.Unit=m2
+Fieldwork.Description=Expenses directly related to labor performed at the isntallation site
+Labor includes burden. EBOS, SBOS, and ESS Labor are direct costs, others are indirect
+Fieldwork.MSPcomment=PV Benchmark Range:     $55 - $97            PV+ESS Range:          $88 - $130
+Fieldwork.MMPcomment=PV Benchmark Range:     $55 - $97            PV+ESS Range:         $88 - $130
+Fieldwork.EBOS Labor=\hour\35\=PVElectricalLabor*(1+LaborBurdenRate)\37\Prevailing wage for electricians. Distortion: Higher wages observed for solar field installation\
+Fieldwork.SBOS Labor=\hour\22.3\=PVConstructionLabor*(1+LaborBurdenRate)\25\Prevailing wage for construction. Distortion: Higher wages observed for solar field installation\
+Fieldwork.ESS Labor=\hour\27.3\=IncludeESS*ESSInstallLabor*StorageDuration*ModuleEfficiency*(1+LaborBurdenRate)\\Mix of construction and electrical labor\
+Fieldwork.Site Prep=3500\m2\8\=IncludeIndirect*1\\Includes establishment of upfront vegetation and water well for the sheep\I
+Fieldwork.Eqpmt Rental=\m2\11\=IncludeIndirect*1\\Rental of equipment and tools for use by on-site labor\I
+Fieldwork.Inspection=10000\\\\\On-site labor to support confirmation of permit compliance\I
+Officework.Size==SystemSize
+Officework.Unit==SystemUnit
+Officework.Description=All costs on this page are Indirect.
+Officework.MSPcomment=PV Benchmark Range:     $148 - $165            PV+ESS Range:          $148 - $165
+Officework.MMPcomment=PV Benchmark Range:     $152 - $177            PV+ESS Range:         $152 - $177
+Officework.Warehousing=\m2\1.5\=1/ModuleEfficiency\3\Distortion: Storage during Customs process for compliance with UFLPA\
+Officework.Logistics=\kg\0.4\=ModuleWeight/ModuleEfficiency\\\
+Officework.Engineering=70000\m2\5\=1/ModuleEfficiency\\Fixed: Enginnering salaries independent of system size\
+Officework.Permits=25000\\\\\Fixed: Permit application fee\
+Officework.Interconnection=30000\kWdc\60\1\\Utility engagement amortized across all proposals. Excludes network upgrade equipment cost\
+Other.Size=100000
+Other.Unit=kWdc
+Other.Description=Other costs related to the operation of the project developer
+These costs are affected by the size of the developer as well as the size of the system
+All costs on this sheet are Indirect costs. See "I" on System sheet
+Other.MSPcomment=PV Benchmark Range:     $189 - $236            PV+ESS Range:          $276 - $381
+Other.MMPcomment=PV Benchmark Range:     $220 - $255            PV+ESS Range:         $333 - $430
+Other.Sales Tax=\kWdc\=(SysModuleMSP+SysInverterMSP+SysESSMSP+SysSBOSMSP+SysEBOSMSP)*SalesTaxRate\1\=B10/$A$3+(SysModuleMMP+SysInverterMMP+SysESSMMP+SysSBOSMMP+SysEBOSMMP)*SalesTaxRate\Sales tax is proportional to system hardware cost\
+Other.Contingency=\kWdc\=(SysModuleMSP+SysInverterMSP+SysESSMSP+SysSBOSMSP+SysEBOSMSP+SysFieldworkMSP+SysOfficeworkMSP)*ContingencyRate\1\=B11/$A$3+(SysModuleMMP+SysInverterMMP+SysESSMMP+SysSBOSMMP+SysEBOSMMP+SysFieldworkMMP+SysOfficeworkMMP)*ContingencyRate\Contingency acknowledges there will be cost overruns of unknown origin\
+Other.Management=1000000\kWdc\=(SysModuleMSP+SysInverterMSP+SysESSMSP+SysSBOSMSP+SysEBOSMSP+SysFieldworkMSP+SysOfficeworkMSP)*OverheadRate\1\=B12/$A$3+(SysModuleMMP+SysInverterMMP+SysESSMMP+SysSBOSMMP+SysEBOSMMP+SysFieldworkMMP+SysOfficeworkMMP)*OverheadRate\Fixed: Management salaries independent of developer's annual installations\
+Other.Profit=\kWdc\=( SysModuleMSP+ SysInverterMSP+ SysESSMSP+ SysSBOSMSP+ SysEBOSMSP+ SysFieldworkMSP+ SysOfficeworkMSP+SUM(F10:F12))* DeveloperProfitMSP\1\=B13/$A$3+(SysModuleMMP+SysInverterMMP+SysESSMMP+SysSBOSMMP+SysEBOSMMP+SysFieldworkMMP+SysOfficeworkMMP+SUM(H10:H12))*DeveloperProfitMMP\Profit required is proportional to total system cost\
+O_M.Size==SystemSize
+O_M.Unit=kWdc
+O_M.Description=Amortized cost to operate and maintain the system over at 20 year lifetime
+Field labor and hardware purchases are direct costs, other costs are indirect
+Both the cost of the sheep and income from selling the sheep are considered out-of-scope
+O_M.MSPcomment=PV Benchmark Range:     $17 - $26            PV+ESS Range:          $35 - $57
+O_M.MMPcomment=PV Benchmark Range:     $18 - $26            PV+ESS Range:         $36 - $58
+O_M.Cleaning=\m2-yr\0.6\=1/ModuleEfficiency\\Module cleaning, vegetation and pest control\
+O_M.Inspection=\m2-yr\0.538906666666667\=1/ModuleEfficiency\\\
+O_M.New BOS=\m2\=SysSBOSMSP\=PartsLossRate/ModuleEfficiency\\Replacement BOS priced at MSP\
+O_M.New Modules=\kWdc\=SysModuleMSP\=ModuleLossRate\\Replacement modules priced at MSP\
+O_M.New Inverters=\kWac\=SysInverterMSP\=InverterLossRate/ILR\\Replacement inverters priced at MSP\
+O_M.New ESS=\kWh-cap\=SysESSMSP\=IncludeESS*StorageDuration*ESSLossRate\\Replacement ESS priced at MSP\E
+O_M.Land Lease=\ha-yr\1500.6\=IncludeIndirect/(ModuleEfficiency*LandArea)\\\I
+O_M.Property Tax=\kWdc-yr\=SystemMSP*PropertyTaxRate\=IncludeIndirect*1\\Annual property tax over life of system based on MSP\I
+O_M.Insurance=\kWdc-yr\=SystemMSP*InsuranceRate\=IncludeIndirect*1\\Annual property insurance over life of system based on MSP\I
+O_M.Management=8853.30333333333\\\\\Fixed asset management and security\I
+Factors.ILR=System\kWac inverter\kWdc modules\1.37\Typical Inverter Load Ratio for Commercial/Industrial systems\
+Factors.StorageDuration=System\kWdc modules\kWh-cap\2\Ratio of ESS rated dc kWh capacity to PV dc rating\
+Factors.Tariff201=System\$ cost\$ tariff\0.1425\\
+Factors.Tariff301=System\$ cost\$ tariff\0.25\\
+Factors.Tariff301high=System\$ cost\$ tariff\0.5\\
+Factors.ModuleEfficiency=Module\m2 modules\kWdc modules\0.200\
+Factors.ModuleHeight=Module\\m\2.500\\
+Factors.ModuleWidth=Module\\m\1.915\\
+Factors.ModuleWeight=Module\m2 modules\kg modules\11.5\\
+Factors.CellToModule=Module\kWdc cells\kWdc modules\0.98\\
+Factors.ModuleLabor=Module\m2 modules\hours labor\0.109\\
+Factors.ModuleElectricity=Module\m2 modules\kWh consumed\5.79\\
+Factors.ModuleDepreciation=Module\$ invested\$/yr\0.118\45% equipment and 55% facility\
+Factors.ModuleProfitMSP=Module\$ cost\$ profit\0.15\Minimum sustainable profit for SE Asian companies\
+Factors.ModuleMarketPrice=Module\kWdc\$\336\Observed Q1 market price\
+Factors.InverterWeight=Inverter\kWac inverter\kg inverter\0.789\\
+Factors.InverterLabor=Inverter\kWac inverter\hours labor\0.045\\
+Factors.InverterElectricity=Inverter\kWac inverter\kWh consumed\8.42\\
+Factors.InverterDepreciation=Inverter\$ invested\$/yr\0.125\50% equipment and 50% facility\
+Factors.InverterProfitMSP=Inverter\$ cost\$ profit\0.15\Minimum sustainable profit for Chinese entities\
+Factors.InverterMarketPrice=Inverter\kWac\$\75\Observed Q1 market price\
+Factors.FastenerWeight=SBOS\m2 modules\kg fastners\0.2\\
+Factors.TorqueTubeWeight=SBOS\m2 modules\kg tubes\5.9\\
+Factors.SBOSshippingWeight=SBOS\m2 modules\kg SBOS\10\\
+Factors.PiersPerRow=SBOS\row\piers\11\\
+Factors.RowLength=SBOS\\m\86.3\\
+Factors.EBOSweight=EBOS\kWac inverter\kg EBOS\2\\
+Factors.Battery45X=ESS\kWh-cap\$ credit\10\45X tax credit for battery modules\
+Factors.BatteryDuration=ESS\kWdc battery\kWh-cap\4\Ratio of ESS rated dc kWh capacity to battery rated dc charge rate\
+Factors.ESS_ILR=ESS\kWdc battery\kWac ESS\1\Ratio of ESS ac inverter rating to battery rated dc charge rate\
+Factors.ESSWeight=ESS\kWh-cap\kg ESS\9.4\\
+Factors.ESSLabor=ESS\kWh-cap\hours labor\0.22\\
+Factors.ESSElectricity=ESS\kWh-cap\kWh consumed\30.5\\
+Factors.ESSDepreciation=ESS\$ invested\$/yr\0.11\40% equipment and 60% facility\
+Factors.ESSProfitMSP=ESS\$ cost\$ profit\0.25\Minimum sustainable profit for U.S. companies\
+Factors.ESSMarketPrice=ESS\kWh-cap\$\228\Observed Q1 market price\
+Factors.PVElectricalLabor=Fieldwork\m2 modules\hours labor\0.55\Assuming lower labor efficiency for commercial size projects\
+Factors.PVConstructionLabor=Fieldwork\m2 modules\hours labor\0.55\Assuming lower labor efficiency for commercial size projects\
+Factors.ESSInstallLabor=Fieldwork\kWh-cap\hours labor\2.15\Additional labor when installed with a PV system\
+Factors.LaborBurdenRate=Fieldwork\$ labor\$ burden\0.54\42% worker's comp, insurance, liability + 12% labor overhead\
+Factors.SalesTaxRate=Other\$ cost\$ tax\0.058\\
+Factors.ContingencyRate=Other\$ cost\$ reserved\0.05\\
+Factors.OverheadRate=Other\$ cost\$ overhead\0.01\Costs of business management that are proportional to expenses\
+Factors.DeveloperProfitMSP=Other\$ cost\$ profit\0.08\\
+Factors.DeveloperProfitMMP=Other\$ cost\$ profit\0.08\\
+Factors.PartsLossRate=O_M\year\fraction\0.002\\
+Factors.InverterLossRate=O_M\year\fraction\0.09\\
+Factors.ModuleLossRate=O_M\year\fraction\0.001\\
+Factors.ESSLossRate=O_M\year\fraction\0.025\\
+Factors.LandArea=O_M\ha land\m2 modules\3000\\
+Factors.PropertyTaxRate=O_M\$ cost\$ tax/year\0.002\\
+Factors.InsuranceRate=O_M\$ cost\$ premiums/year\0.0025\\

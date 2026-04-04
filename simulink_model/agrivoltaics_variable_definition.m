@@ -22,7 +22,7 @@ ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
 
 %% Tracking System Definition (Fixed vs Single Axis)
 % 0 = Fixed Axis, 1 = Single-Axis Tracking 
-agriParams.tracking_mode = 1; 
+agriParams.tracking_mode = 0; 
 
 % Max rotation angle for the single-axis tracker (mechanical limit before
 % hitting motor housing or sturcture
@@ -110,7 +110,7 @@ clear ci_jan21 ci_sep21 ci_jun21 ci_mar21 ci_all_seasons;
 %% Design Variables
 
 % Panel layout variables
-agriVar.PV_z_p = 4.43;           % panel height (m)
+agriVar.PV_z_p = 2.5;           % panel height (m)
 agriVar.PV_l_p = 2.46;           % panel length (m)
 agriVar.PV_w_p = 1.37;           % panel width (m)
 agriVar.PV_phi = .28;           % azimuth (rad)
