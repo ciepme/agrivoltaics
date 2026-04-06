@@ -8,11 +8,11 @@ addpath(genpath(pwd));
 agrivoltaics_variable_definition;
 
 %modify parameters
-agriParams.crop_elec_price = 0.1; % changed from 0.5
+agriParams.crop_elec_price = 0.054; % changed from 0.5
 
 %User define statements
 GA_SELECTOR = 1;
-lambda_fidelity = 0.054;
+lambda_fidelity = 0.1;
 
 lambda = 0:lambda_fidelity:1;
 
@@ -147,7 +147,7 @@ for i = 1:length(ga_final_pop_set)
     P_pop(i) = P_now/mil;
 end
 
-%plot Pareto
+%% plot Pareto
 front_size = 300;
 val_size = 150;
 utopia_size = 500;
@@ -158,9 +158,9 @@ title("Pareto Front");
 xlabel("Profit ($M)");
 ylabel("Emission Reduction (kt CO2e)");
 ylim([0 4]);
-xlim([0 4]);
+xlim([0 0.3]);
 scatter(P_pop, E_pop, val_size, 'black', 'filled');
 scatter(P_set, E_set, front_size, 'green', 'filled');
-scatter(3.5, 3.5, utopia_size, 'cyan', 'filled');
+scatter(0.25, 3.5, utopia_size, 'cyan', 'filled');
 legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
 saveas(fig1,'graphs/pareto_low_pv.png');
