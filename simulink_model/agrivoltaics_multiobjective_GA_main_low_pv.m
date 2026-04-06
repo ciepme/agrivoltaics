@@ -7,9 +7,12 @@ addpath(genpath(pwd));
 
 agrivoltaics_variable_definition;
 
+%modify parameters
+agriParams.crop_elec_price = 0.1; % changed from 0.5
+
 %User define statements
 GA_SELECTOR = 1;
-lambda_fidelity = 0.5;
+lambda_fidelity = 0.054;
 
 lambda = 0:lambda_fidelity:1;
 
@@ -117,7 +120,7 @@ for i = 1:length(lambda)
     ga_final_pop_set = [ga_final_pop_set; population];
 end
 
-save("agrivoltaic_multiobjective_GA_main_data.mat");
+save("agrivoltaic_multiobjective_GA_main_data_low_pv.mat")
 
 %% Post GA Analysis
 mil = 1e6;
@@ -160,4 +163,4 @@ scatter(P_pop, E_pop, val_size, 'black', 'filled');
 scatter(P_set, E_set, front_size, 'green', 'filled');
 scatter(3.5, 3.5, utopia_size, 'cyan', 'filled');
 legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
-saveas(fig1,'graphs/pareto.png');
+saveas(fig1,'graphs/pareto_low_pv.png');

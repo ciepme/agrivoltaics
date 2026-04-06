@@ -1,21 +1,4 @@
 function Cost = runEconomicModel(tracking, efficiency, height, width, length, power)
-     % Ensure the correct path is being pulled
-     
-if matlab.desktop.editor.isEditorAvailable
-    fullPathToScript = matlab.desktop.editor.getActiveFilename;
-    [scriptDir,~,~] = fileparts(fullPathToScript);
-else
-    [scriptDir,~,~] = fileparts(mfilename('fullpath'));
-end
-
-% directing the path to the subfolder
-if contains(scriptDir, 'PVeconomicsfiles')
-        subfolderPath = scriptDir;
-    else
-        subfolderPath = fullfile(scriptDir, 'PVeconomicsfiles');
-    end
-
-
 % choosing the right txt files (either fixed or single)
 if (tracking == 0)
     targettxt = 'FixedAxis.txt'; 
@@ -24,21 +7,22 @@ else
 end
 
 % Create the absolute path to the file inside the subfolder
-fileName = fullfile(subfolderPath, targettxt);
-excelFile = fullfile(subfolderPath, 'EconomicModel.xlsm');
+%fileName = fullfile(subfolderPath, targettxt);
+fileName = fullfile(pwd, 'functions', 'PVeconomicsfiles', targettxt);
+excelFile = fullfile(pwd, 'functions', 'PVeconomicsfiles', 'EconomicModel.xlsm');
 persistent app wb excelFileCached
 
 if isempty(app) || ~iscom(app)
-        try
-            % Try to grab an existing Excel instance first
-            app = actxGetRunningServer('Excel.Application');
-        catch
-            % If none, start a new one
-            app = actxserver('Excel.Application');
-        end
-        app.DisplayAlerts = false;
-        app.Visible = false; % Keep it hidden for speed
+    try
+        % Try to grab an existing Excel instance first
+        app = actxGetRunningServer('Excel.Application');
+    catch
+        % If none, start a new one
+        app = actxserver('Excel.Application');
     end
+    app.DisplayAlerts = false;
+    app.Visible = false; % Keep it hidden for speed
+end
 
 % Safety Check
 if ~exist(fileName, 'file')

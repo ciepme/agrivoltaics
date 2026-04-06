@@ -118,6 +118,10 @@ agriVar.PV_sigma = 1.12;      % tilt (rad)
 agriVar.PV_y_p = 2.5;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
+%override variables
+% agriVar.PV_z_p = 1;
+% agriVar.PV_sigma = 0;
+
 %% if single-axis tracking, set bounds + physics-based initialization
 if agriParams.tracking_mode == 1
     
