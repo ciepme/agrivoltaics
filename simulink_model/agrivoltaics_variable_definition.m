@@ -92,12 +92,14 @@ if isempty(base_dir) % in case there are issues with referencing the main dir
 end
 data_dir = fullfile(base_dir, 'parameterData');
 %for each of the solstice days--> timezone diff relative to UTC--> also
-%MISO only had marginal emissions data back to 2025 so I am just using the
-%2025 dats
-ci_jan21 = get_season_hourly_ci(data_dir,'generated_emissions_MISO_20250121T0500_20250122T0459_co2_for_electricity_5m.csv');
-ci_mar21 = get_season_hourly_ci(data_dir,'generated_emissions_MISO_20250321T0400_20250322T0359_co2_for_electricity_5m.csv');
-ci_jun21 = get_season_hourly_ci(data_dir,'generated_emissions_MISO_20250621T0400_20250622T0359_co2_for_electricity_5m.csv');
-ci_sep21 = get_season_hourly_ci(data_dir,'generated_emissions_MISO_20250921T0400_20250922T0359_co2_for_electricity_5m.csv');
+%for each of the solstice days--> timezone diff relative to UTC--> also
+%Created representative days for each season --> averaged values for each
+%seasonal day across the 90ish days of data gathered for season, spanning
+%from December 2024 to November 2025
+ci_jan21 = get_season_hourly_ci(data_dir,'representativeDaysMisoMarginalEmissions/representative_winter_et_5min.csv'); % winter
+ci_mar21 = get_season_hourly_ci(data_dir,'representativeDaysMisoMarginalEmissions/representative_spring_et_5min.csv'); % spring
+ci_jun21 = get_season_hourly_ci(data_dir,'representativeDaysMisoMarginalEmissions/representative_summer_et_5min.csv'); % summer
+ci_sep21 = get_season_hourly_ci(data_dir,'representativeDaysMisoMarginalEmissions/representative_fall_et_5min.csv'); % fall
 % Combine all seasons in order, starting from the first file passed
 % [96 x 1]
 ci_all_seasons = [ci_jan21; ci_mar21; ci_jun21; ci_sep21];
@@ -161,7 +163,7 @@ clear info_1 info_2;
 %% helper functions
 function ci_avg_hourly = get_season_hourly_ci(data_dir, file_season)
     ci_data_season = readtable(fullfile(data_dir, file_season));
-    ci_season_day_5min = ci_data_season.total_co2_marginal_intensity_lbs_per_mwh;
+    ci_season_day_5min = ci_data_season.mean_marginal_co2_lbs_per_mwh;
     % 12 five-minute points per hour --> 24 hourly vals--> in lbs/MWh
     ci_avg_hourly = mean(reshape(ci_season_day_5min, 12, []), 1).';
 end
