@@ -18,5 +18,16 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
 
     %fprintf('P: %.2f\n', out.p.Data);
 
-    results = [out.e.Data, out.p.Data];
+    E = out.e.Data;
+    P = out.p.Data;
+
+    social_cost = -1.*(P + 190 .* (E ./ 1000));
+
+    crop_revenue = out.crop_revenue.Data;
+    total_panels = out.total_panels.Data;
+    pv_revenue = out.pv_revenue.Data;
+    yearly_biomass = out.yearly_biomass.Data;
+
+    results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels];
+    closeExcel;
 end

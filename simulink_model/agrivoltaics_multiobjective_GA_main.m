@@ -9,7 +9,7 @@ addpath(genpath(pwd));
 agrivoltaics_variable_definition;
 
 %modify parameters
-agriParams.crop_elec_price = 0.001; % changed from 0.5
+agriParams.crop_elec_price = 0.054; % changed from 0.5; 0.054 is new nominal
 
 %User define statements
 GA_SELECTOR = 1;
@@ -129,10 +129,23 @@ save(save_name);
 
 %% Post GA Analysis
 mil = 1e6;
+
 E_set = ones(length(lambda),1);
 P_set = ones(length(lambda),1);
+social_cost_set = ones(length(lambda),1);
+pv_revenue_set = ones(length(lambda),1);
+crop_revenue_set = ones(length(lambda),1);
+yearly_biomass_set = ones(length(lambda),1);
+total_panels_set = ones(length(lambda),1);
+
 E_pop = ones(length(ga_final_pop_set),1);
 P_pop = ones(length(ga_final_pop_set),1);
+social_cost_pop = ones(length(ga_final_pop_set),1);
+pv_revenue_pop = ones(length(ga_final_pop_set),1);
+crop_revenue_pop = ones(length(ga_final_pop_set),1);
+
+yearly_biomass_pop = ones(length(ga_final_pop_set),1);
+total_panels_pop = ones(length(ga_final_pop_set),1);
 
 %find values from GA results
 for i = 1:length(lambda)
@@ -140,7 +153,12 @@ for i = 1:length(lambda)
     E_now = wrapper_results(1);
     P_now = wrapper_results(2);
     E_set(i) = E_now./mil;
-    P_set(i) = P_now/mil;
+    P_set(i) = P_now./mil;
+    social_cost_set(i) = wrapper_results(3)./mil;
+    pv_revenue_set(i) = wrapper_results(4);
+    crop_revenue_set(i) = wrapper_results(5);
+    yearly_biomass_set(i) = wrapper_results(6);
+    total_panels_set(i) = wrapper_results(7);
 end
 
 %find values from GA population
@@ -149,7 +167,12 @@ for i = 1:length(ga_final_pop_set)
     E_now = wrapper_results(1);
     P_now = wrapper_results(2);
     E_pop(i) = E_now./mil;
-    P_pop(i) = P_now/mil;
+    P_pop(i) = P_now./mil;
+    social_cost_pop(i) = wrapper_results(3)./mil;
+    pv_revenue_pop(i) = wrapper_results(4);
+    crop_revenue_pop(i) = wrapper_results(5);
+    yearly_biomass_pop(i) = wrapper_results(6);
+    total_panels_pop(i) = wrapper_results(7);
 end
 
 %% plot Pareto
@@ -172,5 +195,26 @@ scatter(P_pop, E_pop, val_size, 'black', 'filled');
 scatter(P_set, E_set, front_size, 'green', 'filled');
 scatter(star_x_position, 3.5, utopia_size, 'cyan', 'filled', "pentagram");
 legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
-figure_name = "graphs/pareto" + file_suffix + ".png";
+figure_name = "graphs/pareto_ep" + file_suffix + ".png";
 saveas(fig1,figure_name);
+hold off;
+
+% Pareto for social cost and yearly biomass
+front_size = 200;
+val_size = 50;
+utopia_size = 800;
+fig2 = figure;
+theme(fig2,"light");
+hold on;
+title("Pareto Front");
+xlabel("Social Profit ($M)");
+ylabel("Yearly Biomass Production (g/m^2)");
+ylim([0 600]);
+xlim([0 star_x_position]);
+scatter(-social_cost_pop, yearly_biomass_pop, val_size, 'black', 'filled');
+scatter(-social_cost_set, yearly_biomass_set, front_size, 'green', 'filled');
+scatter(star_x_position, 600, utopia_size, 'cyan', 'filled', "pentagram");
+legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
+figure_name = "graphs/pareto_scb" + file_suffix + ".png";
+saveas(fig2,figure_name);
+hold off;
