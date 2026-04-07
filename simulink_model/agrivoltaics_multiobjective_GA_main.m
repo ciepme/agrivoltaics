@@ -2,23 +2,26 @@
 clear;
 clc;
 close;
+delete(gcp('nocreate'));
 
 addpath(genpath(pwd));
 
 agrivoltaics_variable_definition;
 
 %modify parameters
-agriParams.crop_elec_price = 0.054; % changed from 0.5
+agriParams.crop_elec_price = 0.001; % changed from 0.5
 
 %User define statements
 GA_SELECTOR = 1;
-lambda_fidelity = 0.1;
+file_suffix = "_p1_deep";
+lambda_fidelity = 0.25;
 
 lambda = 0:lambda_fidelity:1;
 
 %GA hyperparameter settings
-pop_size = 30;
+pop_size = 100;
 stall = 1;
+%parpool; % for parallel processing
 
 % Tell GA exactly how many variables we are optimizing (7 or 103, dependent
 %create a smart guess to seed GA population for if tracking mode
@@ -73,17 +76,17 @@ elseif GA_SELECTOR == 2
     rng(2);
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', x0);
+        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', 'UseParallel', true);
 elseif GA_SELECTOR == 3
     rng(3);
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', x0);
+        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', 'UseParallel', true, x0);
 elseif GA_SELECTOR == 4
     rng(4);
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', x0);
+        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', 'UseParallel', true, x0);
 end
 
 %% Set Up GA
@@ -120,7 +123,9 @@ for i = 1:length(lambda)
     ga_final_pop_set = [ga_final_pop_set; population];
 end
 
-save("agrivoltaic_multiobjective_GA_main_data_low_pv.mat")
+save_name = "agrivoltaic_multiobjective_GA_main_data" + file_suffix + ".mat";
+
+save(save_name);
 
 %% Post GA Analysis
 mil = 1e6;
@@ -148,19 +153,24 @@ for i = 1:length(ga_final_pop_set)
 end
 
 %% plot Pareto
-front_size = 300;
-val_size = 150;
-utopia_size = 500;
+min_profit = min(min(P_pop),min(P_set));
+star_x_position = 1.5.*max(max(P_pop),max(P_set));
+
+% Pareto for E and P
+front_size = 200;
+val_size = 50;
+utopia_size = 800;
 fig1 = figure;
 theme(fig1,"light");
 hold on;
 title("Pareto Front");
 xlabel("Profit ($M)");
 ylabel("Emission Reduction (kt CO2e)");
-ylim([0 4]);
-xlim([0 0.3]);
+ylim([0 3.5]);
+xlim([min_profit star_x_position]);
 scatter(P_pop, E_pop, val_size, 'black', 'filled');
 scatter(P_set, E_set, front_size, 'green', 'filled');
-scatter(0.25, 3.5, utopia_size, 'cyan', 'filled');
+scatter(star_x_position, 3.5, utopia_size, 'cyan', 'filled', "pentagram");
 legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
-saveas(fig1,'graphs/pareto_low_pv.png');
+figure_name = "graphs/pareto" + file_suffix + ".png";
+saveas(fig1,figure_name);
