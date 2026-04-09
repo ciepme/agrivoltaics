@@ -31,6 +31,8 @@ agriParams.PV_max_tilt = 60 * (pi/180); % Convert degrees to radians
 % tracking angles for optimizer matrix definition
 % 4x24 matrix (4 seasons, 24 hours). 
 agriVar.tracking_angles = zeros(4, 24);
+
+
 %% Parameter Definition (Fixed values)
 
 % Land parameters
