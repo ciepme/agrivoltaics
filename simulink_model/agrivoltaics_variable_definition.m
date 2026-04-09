@@ -17,7 +17,7 @@ addpath(genpath(pwd));
 % (6) = PV_y_p; Distance between rows (m) of panels
 % (7) = PV_x_p; Distance between panels in a pair/row (m)
 % Order: [Height, Length, Width, Azimuth, Tilt, Row Gap, Panel Gap]
-lb = [2.5, 1.0, 1.0, -pi/2, 0,    2.5,  0.1]; 
+lb = [2.5, 1.0, 1.0, -pi/2, 0,    2,  0.1]; 
 ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
 
 %% Tracking System Definition (Fixed vs Single Axis)
@@ -77,14 +77,14 @@ agriParams.startup_years=3;%number of startup years for raspberries prior to ste
 
 agriParams.ongoing_OMcost = 18543.62; %ongoing cost of operations and maintenance (post startup years) for raspberry growing per acre
 
+
 % additions for microclimate
 agriParams.crop_PAR_frac = 0.48; % portion of sunlight usable for photosynthesis--> changed to 0.48 from 0.45 (from more recent study)
 agriParams.crop_T_base = 5; % all temps in celcius --> below this temp raspberries can't grow
 agriParams.crop_T_opt = 20; % this is the optimal temperature for raspberry growth
 agriParams.crop_T_max = 30; % about the max temp that raspberries can  grow at
 agriParams.crop_c_T = 2.5; % degrees celcius per unit SF--> conflicting data for this--> could be anywhere from 1.5 to 3.7 deg celcius
-agriParams.crop_GCF = 0.3; % Ground Cover Fraction --> the portion of the plot that is actually covered my raspberries (calc. from Penn State metrics for open field red raspberries)
-% reasonable GCF range --> [0.15-0.5]
+
 
 % environmental parameters
 base_dir = fileparts(mfilename('fullpath'));
@@ -109,7 +109,22 @@ ci_all_seasons = [ci_jan21; ci_mar21; ci_jun21; ci_sep21];
 agriParams.env_ci_marginal_hourly_miso = ci_all_seasons;
 clear ci_jan21 ci_sep21 ci_jun21 ci_mar21 ci_all_seasons;
 
+%% Hardware and farming constraints/parameters (in meters)
+%rather than add constraints, just use equations within model and dependent variables to alter spacing 
+agriParams.support_width = 0.5;      % Width of the steel solar mount base
 
+%can change if hand picked or tractors
+% handpicking = 0, tractor = 1
+harvest_mode = 0;
+if harvest_mode ==  0
+    agriParams.harvest_clearance = 1.2;   % ~4 feet needed for humans and hand-carts
+    agriParams.safety_buffer = 0.3;      % Slightly smaller buffer since humans are more precise than tractors
+elseif harvest_mode == 1
+    agriParams.harvest_clearance = 3.0;  % ~10 feet needed for the raspberry tractor
+    agriParams.safety_buffer = 0.5;      % 0.5m buffer so the tractor doesn't hit the steel
+else
+    disp('error: pick a valid harvesting method')
+end 
 
 %% Design Variables
 

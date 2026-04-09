@@ -1,4 +1,4 @@
-function annual_biomass = calculate_crop_growth(SF_spring, SF_summer, SF_fall, SF_winter, agriParams)
+function annual_biomass = calculate_crop_growth(SF_spring, SF_summer, SF_fall, SF_winter, agriParams, crop_GCF)
    %  General Crop Parameters
   RUE = agriParams.crop_RUE;
   k = agriParams.crop_k;
@@ -7,7 +7,7 @@ function annual_biomass = calculate_crop_growth(SF_spring, SF_summer, SF_fall, S
   T_max = agriParams.crop_T_max;
   c_T  = agriParams.crop_c_T;
   PAR_frac = agriParams.crop_PAR_frac;
-  GCF = agriParams.crop_GCF;
+  GCF = crop_GCF;
 
   days_per_season = 91.25;
    %  Seasonal Leaf Area Index (LAI)
