@@ -13,13 +13,13 @@ agriParams.crop_elec_price = 0.054; % changed from 0.5; 0.054 is new nominal
 
 %User define statements
 GA_SELECTOR = 1;
-file_suffix = "_p1_deep";
-lambda_fidelity = 0.25;
+file_suffix = "_test";
+lambda_fidelity = 0.5;
 
 lambda = 0:lambda_fidelity:1;
 
 %GA hyperparameter settings
-pop_size = 100;
+pop_size = 5;
 stall = 1;
 %parpool; % for parallel processing
 
@@ -100,7 +100,7 @@ ga_set = ones(1,7);
 for i = 1:length(lambda)
     tic;
     [ga_solve,fval,exitflag,output,population,scores] = ...
-        ga(@(x) agrivoltaic_weighted_sum_wrapper(x, agriParams, lambda(i)), ...
+        ga(@(x) agrivoltaic_weighted_sum_social_benefit_wrapper(x, agriParams, lambda(i)), ...
         num_vars, A, B, Aeq, Beq, lb, ub, ...
         nlcon, options);
     time_taken = toc;
@@ -177,7 +177,7 @@ end
 
 %% plot Pareto
 min_profit = min(min(P_pop),min(P_set));
-star_x_position = 1.5.*max(max(P_pop),max(P_set));
+star_x_position_emission = 1.5.*max(max(P_pop),max(P_set));
 
 % Pareto for E and P
 front_size = 200;
@@ -190,14 +190,16 @@ title("Pareto Front");
 xlabel("Profit ($M)");
 ylabel("Emission Reduction (kt CO2e)");
 ylim([0 3.5]);
-xlim([min_profit star_x_position]);
+xlim([min_profit star_x_position_emission]);
 scatter(P_pop, E_pop, val_size, 'black', 'filled');
 scatter(P_set, E_set, front_size, 'green', 'filled');
-scatter(star_x_position, 3.5, utopia_size, 'cyan', 'filled', "pentagram");
+scatter(star_x_position_emission, 3.5, utopia_size, 'cyan', 'filled', "pentagram");
 legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
 figure_name = "graphs/pareto_ep" + file_suffix + ".png";
 saveas(fig1,figure_name);
 hold off;
+
+star_x_position_social_profit = 1.5.*max(max(-social_cost_pop),max(-social_cost_set));
 
 % Pareto for social cost and yearly biomass
 front_size = 200;
@@ -208,12 +210,12 @@ theme(fig2,"light");
 hold on;
 title("Pareto Front");
 xlabel("Social Profit ($M)");
-ylabel("Yearly Biomass Production (g/m^2)");
+ylabel("Annual Raspberry Production (g/m^2)");
 ylim([0 600]);
-xlim([0 star_x_position]);
+xlim([0 star_x_position_social_profit]);
 scatter(-social_cost_pop, yearly_biomass_pop, val_size, 'black', 'filled');
 scatter(-social_cost_set, yearly_biomass_set, front_size, 'green', 'filled');
-scatter(star_x_position, 600, utopia_size, 'cyan', 'filled', "pentagram");
+scatter(star_x_position_social_profit, 600, utopia_size, 'cyan', 'filled', "pentagram");
 legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
 figure_name = "graphs/pareto_scb" + file_suffix + ".png";
 saveas(fig2,figure_name);
