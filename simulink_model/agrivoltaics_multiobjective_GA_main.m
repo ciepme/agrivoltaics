@@ -125,8 +125,6 @@ end
 
 save_name = "agrivoltaic_multiobjective_GA_main_data" + file_suffix + ".mat";
 
-save(save_name);
-
 %% Post GA Analysis
 mil = 1e6;
 
@@ -174,6 +172,8 @@ for i = 1:length(ga_final_pop_set)
     yearly_biomass_pop(i) = wrapper_results(6);
     total_panels_pop(i) = wrapper_results(7);
 end
+
+save(save_name);
 
 %% plot Pareto
 min_profit = min(min(P_pop),min(P_set));
