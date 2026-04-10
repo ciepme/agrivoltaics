@@ -224,16 +224,28 @@ hold off;
 
 %% Official Pareto Front
 
-fake_data = rand(250,2);
-fake_data(:,1) = 4.*fake_data(:,1);
-fake_data(:,2) = 400.*fake_data(:,2);
-inverse_fake_data = -1.*fake_data;
+social_benefit = [-social_cost_set; -social_cost_pop];
+yearly_biomass = [yearly_biomass_set; yearly_biomass_pop];
 
-front_indices = getNonDominated(inverse_fake_data);
-fake_front = fake_data(front_indices,:);
+pareto_data = [social_benefit yearly_biomass];
+pareto_data_inverse = -1.*pareto_data;
+pareto_indices = getNonDominated(pareto_data_inverse);
+pareto_front = pareto_data(pareto_indices,:);
+pareto_front = sortrows(pareto_front, 1);
 
-%reorder fake front by profit
-fake_front = sortrows(fake_front, 1);
+% fake_data = rand(250,2);
+% fake_data(:,1) = 4.*fake_data(:,1);
+% fake_data(:,2) = 400.*fake_data(:,2);
+% inverse_fake_data = -1.*fake_data;
+% 
+% front_indices = getNonDominated(inverse_fake_data);
+% fake_front = fake_data(front_indices,:);
+%
+% %reorder fake front by profit
+% fake_front = sortrows(fake_front, 1);
+
+x_limit = [min(pareto_data(:,1)) max(pareto_data(:,1))];
+y_limit = [min(pareto_data(:,2)) max(pareto_data(:,2))];
 
 front_size = 200;
 val_size = 50;
@@ -244,12 +256,12 @@ hold on;
 title("Pareto Front");
 xlabel("Social Profit ($M)");
 ylabel("Annual Raspberry Production (g/m^2)");
-ylim([0 600]);
-xlim([0 5]);
-scatter(fake_data(:,1), fake_data(:,2), val_size, 'black', 'filled');
-scatter(fake_front(:,1), fake_front(:,2), front_size, 'green', 'filled');
-scatter(5, 600, utopia_size, 'cyan', 'filled', "pentagram");
-plot(fake_front(:,1), fake_front(:,2), 'green', 'LineWidth', 3);
+ylim(y_limit);
+xlim(x_limit);
+scatter(pareto_data(:,1), pareto_data(:,2), val_size, 'black', 'filled');
+scatter(pareto_front(:,1), pareto_front(:,2), front_size, 'green', 'filled');
+scatter(x_limit(2), y_limit(2), utopia_size, 'cyan', 'filled', "pentagram");
+plot(pareto_front(:,1), pareto_front(:,2), 'green', 'LineWidth', 3);
 legend("Values from GA Population", "Pareto Front", "Utopia Point", 'Location','southwest');
 figure_name = "graphs/official_pareto" + file_suffix + ".png";
 saveas(fig3,figure_name);
