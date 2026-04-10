@@ -13,13 +13,13 @@ agriParams.crop_elec_price = 0.054; % changed from 0.5; 0.054 is new nominal
 
 %User define statements
 GA_SELECTOR = 1;
-file_suffix = "_test";
-lambda_fidelity = 0.5;
+file_suffix = "_berry_pop50";
+lambda_fidelity = 0.1;
 
 lambda = 0:lambda_fidelity:1;
 
 %GA hyperparameter settings
-pop_size = 5;
+pop_size = 50;
 stall = 1;
 %parpool; % for parallel processing
 
@@ -68,7 +68,7 @@ end
 
 %1 for basic GA
 if GA_SELECTOR == 1
-    rng(1);
+    rng(2);
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 40, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
         'iter','PlotFcn', @gaplotbestf);
@@ -200,6 +200,7 @@ saveas(fig1,figure_name);
 hold off;
 
 star_x_position_social_profit = 1.5.*max(max(-social_cost_pop),max(-social_cost_set));
+star_y_position_berry_production = 1.5.*max(max(yearly_biomass_pop),max(yearly_biomass_set));
 
 % Pareto for social cost and yearly biomass
 front_size = 200;
@@ -211,11 +212,11 @@ hold on;
 title("Pareto Front");
 xlabel("Social Profit ($M)");
 ylabel("Annual Raspberry Production (g/m^2)");
-ylim([0 600]);
+ylim([0 star_y_position_berry_production]);
 xlim([0 star_x_position_social_profit]);
 scatter(-social_cost_pop, yearly_biomass_pop, val_size, 'black', 'filled');
 scatter(-social_cost_set, yearly_biomass_set, front_size, 'green', 'filled');
-scatter(star_x_position_social_profit, 600, utopia_size, 'cyan', 'filled', "pentagram");
+scatter(star_x_position_social_profit, star_y_position_berry_production, utopia_size, 'cyan', 'filled', "pentagram");
 legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
 figure_name = "graphs/pareto_scb" + file_suffix + ".png";
 saveas(fig2,figure_name);

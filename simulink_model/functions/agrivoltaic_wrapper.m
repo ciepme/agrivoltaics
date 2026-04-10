@@ -11,6 +11,10 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
     agriSim = agriSim.setVariable('agriVar', agriVar);
     agriSim = agriSim.setVariable('agriParams', agriParams);
 
+    %set in rapid accelerator
+    %agriSim = agriSim.setModelParameter('SimulationMode','Rapid');
+    %agriSim = agriSim.setModelParameter('RapidAcceleratorUpToDateCheck','off'); 
+
     %fprintf('z_p: %.2f\n', agriVar.PV_z_p);
 
     %run sim
