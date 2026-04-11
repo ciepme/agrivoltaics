@@ -13,13 +13,13 @@ agriParams.crop_elec_price = 0.054; % changed from 0.5; 0.054 is new nominal
 
 %User define statements
 GA_SELECTOR = 1;
-file_suffix = "_berry_pop50";
+file_suffix = "_berry_pop80";
 lambda_fidelity = 0.1;
 
 lambda = 0:lambda_fidelity:1;
 
 %GA hyperparameter settings
-pop_size = 50;
+pop_size = 80;
 stall = 1;
 %parpool; % for parallel processing
 
