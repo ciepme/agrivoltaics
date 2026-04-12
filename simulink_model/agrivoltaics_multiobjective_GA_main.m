@@ -13,13 +13,13 @@ agriParams.crop_elec_price = 0.054; % changed from 0.5; 0.054 is new nominal
 
 %User define statements
 GA_SELECTOR = 1;
-file_suffix = "_berry_pop80";
+file_suffix = "_berry_pop100";
 lambda_fidelity = 0.1;
 
 lambda = 0:lambda_fidelity:1;
 
 %GA hyperparameter settings
-pop_size = 80;
+pop_size = 100;
 stall = 1;
 %parpool; % for parallel processing
 
@@ -68,7 +68,7 @@ end
 
 %1 for basic GA
 if GA_SELECTOR == 1
-    rng(2);
+    rng(3);
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 40, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
         'iter','PlotFcn', @gaplotbestf);

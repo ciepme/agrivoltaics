@@ -21,6 +21,7 @@ ga_set_50 = ga_set;
 ga_final_pop_set_50 = ga_final_pop_set;
 social_benefit_50 = [-social_cost_set; -social_cost_pop];
 yearly_biomass_50 = [yearly_biomass_set; yearly_biomass_pop];
+
 load("agrivoltaic_multiobjective_GA_main_data_berry_pop80.mat", ...
     "social_cost_set", "social_cost_pop", "yearly_biomass_set", ...
     "ga_final_pop_set", "ga_set", "yearly_biomass_pop");
@@ -31,11 +32,21 @@ ga_final_pop_set_80 = ga_final_pop_set;
 social_benefit_80 = [-social_cost_set; -social_cost_pop];
 yearly_biomass_80 = [yearly_biomass_set; yearly_biomass_pop];
 
+load("agrivoltaic_multiobjective_GA_main_data_berry_pop100.mat", ...
+    "social_cost_set", "social_cost_pop", "yearly_biomass_set", ...
+    "ga_final_pop_set", "ga_set", "yearly_biomass_pop");
+social_cost_set_100 = social_cost_set;
+social_cost_pop_100 = social_cost_pop;
+ga_set_100 = ga_set;
+ga_final_pop_set_100 = ga_final_pop_set;
+social_benefit_100 = [-social_cost_set; -social_cost_pop];
+yearly_biomass_100 = [yearly_biomass_set; yearly_biomass_pop];
+
 
 %% Combine Pareto Fronts
 
-social_benefit = [social_benefit_50; social_benefit_80];
-yearly_biomass = [yearly_biomass_50; yearly_biomass_80];
+social_benefit = [social_benefit_50; social_benefit_80; social_benefit_100];
+yearly_biomass = [yearly_biomass_50; yearly_biomass_80; yearly_biomass_100];
 
 pareto_data = [social_benefit yearly_biomass];
 pareto_data_inverse = -1.*pareto_data;
@@ -48,7 +59,7 @@ y_limit = [min(pareto_data(:,2)) max(pareto_data(:,2))];
 
 % find optimal design
 social_design = [1.05215 678.568];
-biomass_design = [0.349174 1317.21];
+biomass_design = [0.381511 1319.81];
 balanced_design = [0.832745 840.469];
 
 tol = 1e-3;
@@ -101,8 +112,8 @@ if social_index_full <= length(social_cost_set_50)
 end
 
 % biomass
-if biomass_index_full > length(social_benefit_50)
-    variable_biomass_index = biomass_index_full - length(social_benefit_50)  - length(ga_set_80);
-    variables_biomass = ga_final_pop_set_80(variable_biomass_index,:);
+if biomass_index_full > (length(social_benefit_50) + length(social_benefit_80))
+    variable_biomass_index = biomass_index_full - length(social_benefit_50) - length(social_benefit_80) - length(ga_set_100);
+    variables_biomass = ga_final_pop_set_100(variable_biomass_index,:);
     agrivoltaic_wrapper(variables_biomass, agriParams)
 end
