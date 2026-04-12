@@ -10,8 +10,8 @@ addpath(genpath(pwd));
 
 %% Variable Bound Definition
 % (1) = PV_z_p; panel height above the ground (m)
-% (2) = PV_l_p; panel length (m)
-% (3) = PV_w_p; panel width (m)
+% (2) = PV_l_p; panel length, goes in y_p direction (m)
+% (3) = PV_w_p; panel width, goes in x_p direction (m)
 % (4) = PV_phi; azimuth angle (radians) - relative to true South, going ccw e.g. pi/2 rad is East
 % (5) = PV_sigma; tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane
 % (6) = PV_y_p; Distance between rows (m) of panels
