@@ -1,6 +1,6 @@
 Program.Name=PVSCM
 Program.Date=10/22/2024
-System.Size=330.49
+System.Size=54.87
 System.Unit=kWdc
 System.Description=1.5 - 6 MWdc ground mount fixed tilt racking. site suitable for sheet grazing
 2-hour system battery energy storage
@@ -146,8 +146,8 @@ Factors.Tariff201=System\$ cost\$ tariff\0.1425\\
 Factors.Tariff301=System\$ cost\$ tariff\0.25\\
 Factors.Tariff301high=System\$ cost\$ tariff\0.5\\
 Factors.ModuleEfficiency=Module\m2 modules\kWdc modules\0.200\
-Factors.ModuleHeight=Module\\m\4.489\\
-Factors.ModuleWidth=Module\\m\1.700\\
+Factors.ModuleHeight=Module\\m\4.353\\
+Factors.ModuleWidth=Module\\m\1.601\\
 Factors.ModuleWeight=Module\m2 modules\kg modules\11.5\\
 Factors.CellToModule=Module\kWdc cells\kWdc modules\0.98\\
 Factors.ModuleLabor=Module\m2 modules\hours labor\0.109\\
