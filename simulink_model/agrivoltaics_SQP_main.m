@@ -6,7 +6,7 @@ rng default;
 agrivoltaics_variable_definition;
 
 x0 = agriVarStruct2Array(agriVar, agriParams); %initial guess pulled from variable definition file
-use_scaled_SQP = false; % adding switch for running with scaling or without
+use_scaled_SQP = true; % adding switch for running with scaling or without
 scale = [1e2, 1e2, 1e2, 1e3, 1e5, 1e5, 1e5]; % scaling values derived from the Hessian at last x_star
 x0_scaled = x0 .* scale;
 lb_scaled = lb .* scale;
@@ -36,7 +36,7 @@ disp('Optimal Variables Found:');
 fprintf('  Panel Height (z_p) : %.4f m\n', x_opt(1));
 fprintf('  Panel Length (l_p) : %.4f m\n', x_opt(2));
 fprintf('  Panel Width (w_p)  : %.4f m\n', x_opt(3));
-fprintf('  Azimuth (phi)      : %.4f rad (%.2f deg)\n', x_opt(4), rad2deg(x_opt(4)));
-fprintf('  Tilt (sigma)       : %.4f rad (%.2f deg)\n', x_opt(5), rad2deg(x_opt(5)));
-fprintf('  Row Spacing (y_p)  : %.4f m\n', x_opt(6));
-fprintf('  Panel Gap (x_p)    : %.4f m\n', x_opt(7));
+fprintf('  Azimuth (phi)      : %.4f rad (%.4f deg)\n', x_opt(4), rad2deg(x_opt(4)));
+fprintf('  Tilt (sigma)       : %.4f rad (%.4f deg)\n', x_opt(5), rad2deg(x_opt(5)));
+fprintf('  Row Spacing (y_p)  : %.6f m\n', x_opt(6));
+fprintf('  Panel Gap (x_p)    : %.6f m\n', x_opt(7));

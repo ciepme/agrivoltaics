@@ -132,10 +132,10 @@ end
 agriVar.PV_z_p = 4.5;           % panel height (m)
 agriVar.PV_l_p = 2.5;           % panel length (m)
 agriVar.PV_w_p = 1.5;           % panel width (m)
-agriVar.PV_phi = 0.3054326;           % azimuth (rad)
-agriVar.PV_sigma = 0.64577;      % tilt (rad)
-agriVar.PV_y_p = 2.5488;           % row distance (m)
-agriVar.PV_x_p = 0.1129;         % panel distance (m)
+agriVar.PV_phi = 0.30618267556602;           % azimuth (rad)
+agriVar.PV_sigma = 0.64572550272155;      % tilt (rad)
+agriVar.PV_y_p = 2.548752982;           % row distance (m)
+agriVar.PV_x_p = 0.112897172;         % panel distance (m)
 
 %override variables
 % agriVar.PV_z_p = 1;
