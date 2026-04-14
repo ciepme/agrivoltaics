@@ -54,8 +54,8 @@ pareto_indices = getNonDominated(pareto_data_inverse);
 pareto_front = pareto_data(pareto_indices,:);
 pareto_front = sortrows(pareto_front, 1);
 
-x_limit = [min(pareto_data(:,1)) max(pareto_data(:,1))];
-y_limit = [min(pareto_data(:,2)) max(pareto_data(:,2))];
+x_limit = [min(pareto_data(:,1)) (max(pareto_data(:,1)) + 0.1)];
+y_limit = [min(pareto_data(:,2)) (max(pareto_data(:,2)) + 100)];
 
 % find optimal design
 social_design = [1.05215 678.568];
@@ -83,10 +83,18 @@ xlim(x_limit);
 scatter(pareto_data(:,1), pareto_data(:,2), val_size, 'black', 'filled');
 scatter(pareto_front(:,1), pareto_front(:,2), front_size, 'green', 'filled');
 scatter(intesting_designs(:,1), intesting_designs(:,2), front_size, 'blue', 'd', 'filled');
-scatter(x_limit(2), y_limit(2), utopia_size, 'cyan', 'filled', "pentagram");
+scatter(max(pareto_data(:,1)), max(pareto_data(:,2)), utopia_size, 'cyan', 'filled', "pentagram");
+plot([social_design(1) social_design(1) x_limit(2)],[y_limit(2) social_design(2) social_design(2)], 'r--', 'LineWidth', 1);
+plot([balanced_design(1) balanced_design(1) x_limit(2)],[y_limit(2) balanced_design(2) balanced_design(2)], 'g--', 'LineWidth', 1);
+plot([biomass_design(1) biomass_design(1) x_limit(2)],[y_limit(2) biomass_design(2) biomass_design(2)], 'b--', 'LineWidth', 1);
 plot(pareto_front(:,1), pareto_front(:,2), 'green', 'LineWidth', 3);
+scatter(max(pareto_data(:,1)), max(pareto_data(:,2)), utopia_size, 'cyan', 'filled', "pentagram");
 scatter(intesting_designs(:,1), intesting_designs(:,2), front_size, 'blue', 'd', 'filled');
-legend("Values from GA Population", "Pareto Front", "Designs of Interest", "Utopia Point", 'Location','southwest');
+legend("Values from GA Population", "Pareto Front", "Designs of Interest", "Utopia Point", ...
+    "Social Cost of Carbon Design Dominated Space", ...
+    "Balanced Design Dominated Space", ...
+    "Raspberry Design Dominated Space", ...
+    'Location','southwest');
 figure_name = "graphs/official_pareto" + "_combined" + ".png";
 saveas(fig3,figure_name);
 hold off;
