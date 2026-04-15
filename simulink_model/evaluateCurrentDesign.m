@@ -16,6 +16,7 @@ social_value = -social_cost;
 emissions_value = 190 * (E / 1000);
 
 fprintf('current design vector from agrivoltaics_variable_definition.m:\n');
+format long g;
 disp(x);
 
 fprintf('model evaluation results:\n');
@@ -55,4 +56,9 @@ T.total_panels = total_panels;
 T.co2_displaced_tons = E / 1000;
 
 writetable(T, csv_file);
+formatSpec = [repmat('%.15g,', 1, width(T) - 1), '%.15g\n'];
+fid = fopen(csv_file, 'w');
+fprintf(fid, '%s\n', strjoin(T.Properties.VariableNames, ','));
+fprintf(fid, formatSpec, table2array(T).');
+fclose(fid);
 fprintf('  Results CSV       : %s\n', csv_file);
