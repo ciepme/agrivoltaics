@@ -57,7 +57,7 @@ agriParams.PV_psi = 0;        % field layout angle (rad)
 agriParams.PV_startup_period=1; %years spent creating the solar array
 
 % Crop & Econ parameters
-agriParams.crop_elec_price = 0.5; 
+agriParams.crop_elec_price = 0.054; 
 agriParams.crop_price = 16.03; %USD/kg
 agriParams.crop_HI = 0.3; %this is harvest index, for raspberries it is roughly .3, so 30% of the plant weight is berries- changes based on crop choice
 agriParams.crop_MC = .85; %this is moisture content, raspberries are about 85% water
@@ -129,13 +129,22 @@ end
 %% Design Variables
 
 % Panel layout variables
-agriVar.PV_z_p = 4.5;           % panel height (m)
-agriVar.PV_l_p = 2.5;           % panel length (m)
-agriVar.PV_w_p = 1.5;           % panel width (m)
-agriVar.PV_phi = 0.30618267556602;           % azimuth (rad)
-agriVar.PV_sigma = 0.64572550272155;      % tilt (rad)
-agriVar.PV_y_p = 2.548752982;           % row distance (m)
-agriVar.PV_x_p = 0.112897172;         % panel distance (m)
+agriVar.PV_z_p = 3.79;           % panel height (m)
+agriVar.PV_l_p = 2.43;           % panel length (m)
+agriVar.PV_w_p = 1.45;           % panel width (m)
+agriVar.PV_phi = 0.68;           % azimuth (rad)
+agriVar.PV_sigma = 1.5;      % tilt (rad)
+agriVar.PV_y_p = 2.0;           % row distance (m)
+agriVar.PV_x_p = 0.1;         % panel distance (m)
+
+% agriVar.PV_z_p = 4.5;           % panel height (m)
+% agriVar.PV_l_p = 2.5;           % panel length (m)
+% agriVar.PV_w_p = 1.45;           % panel width (m)
+% agriVar.PV_phi = 0.12;           % azimuth (rad)
+% agriVar.PV_sigma = 1.5;      % tilt (rad)
+% agriVar.PV_y_p = 2.548753;           % row distance (m)
+% agriVar.PV_x_p = 0.1;  
+
 
 %override variables
 % agriVar.PV_z_p = 1;
