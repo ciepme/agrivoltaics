@@ -85,6 +85,8 @@ fprintf('  Crop revenue      : $%.4f\n', crop_revenue);
 fprintf('  Yearly biomass    : %.4f kg/yr\n', yearly_biomass);
 fprintf('  Total panels      : %.1f\n', total_panels);
 fprintf('  CO2 displaced     : %.4f tons\n', E / 1000);
+fprintf('\n');
+print_value_breakdown(x_opt, agriParams);
 
 base_dir = fileparts(mfilename('fullpath'));
 if isempty(base_dir), base_dir = pwd; end

@@ -7,6 +7,7 @@ addpath(genpath(pwd));
 agrivoltaics_variable_definition;
 
 GA_SELECTOR = 1;
+save_name = sprintf('agrivoltaics_GA_main_data_w_selector_%d.mat', GA_SELECTOR);
 % Tell GA exactly how many variables we are optimizing (7 or 103, dependent
 % on fixed or single-axis)
 num_vars = length(lb);
@@ -54,12 +55,12 @@ if GA_SELECTOR == 1
     rng(1);
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 40, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', 10,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', x0);
+        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', pop);
 elseif GA_SELECTOR == 2
     rng(2);
-    options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
+    options = optimoptions('ga', 'PopulationSize', pop_size+20, 'MaxGenerations', 100, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', 10,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', x0);
+        'iter','PlotFcn', @gaplotbestf); % random initial point generation using built in GA intitial point alg
 elseif GA_SELECTOR == 3
     rng(3);
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
@@ -96,3 +97,8 @@ fprintf('Azimuth %.2f rad (%.1f deg)\n', ga_solve(4), rad2deg(ga_solve(4)));
 fprintf('Tilt: %.2f rad (%.1f deg)\n', ga_solve(5), rad2deg(ga_solve(5)));
 fprintf('Row Spacing: %.2f m\n', ga_solve(6));
 fprintf('Panel Gap (x_p): %.2f m\n', ga_solve(7))
+fprintf('\n');
+print_value_breakdown(ga_solve, agriParams);
+
+save(save_name);
+fprintf('Saved GA results to %s\n', save_name);
