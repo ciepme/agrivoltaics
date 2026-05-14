@@ -58,28 +58,54 @@ var_track = agriVar_base;
 var_track.tracking_angles = generate_physics_tracking(params_track, var_track);
 var_track.tracking_angles = clamp_tracking(var_track.tracking_angles, params_track.PV_max_tilt);
 
-lb_track = [lb_base(:).', zeros(1, 96)];
-ub_track = [ub_base(:).', ones(1, 96) * params_track.PV_max_tilt];
+%%
+% OLD BOUNDS 
+lb_track_old = [lb_base(:).', zeros(1, 96)];
+ub_track_old = [ub_base(:).', ones(1, 96) * params_track.PV_max_tilt];
+
+% NEW BOUNDS adds in logic so that no tracking at night
+tracking_lb_new = zeros(1, 96); 
+tracking_ub_new = zeros(1, 96); 
+seasons = {'spring', 'summer', 'fall', 'winter'};
+for s = 1:4
+    is_daytime = params_track.weather.(seasons{s}).beta_s > 0;
+    start_idx = (s-1)*24 + 1;
+    end_idx = s*24;
+    tracking_lb_new(start_idx:end_idx) = -params_track.PV_max_tilt .* is_daytime;
+    tracking_ub_new(start_idx:end_idx) =  params_track.PV_max_tilt .* is_daytime;
+end
+lb_track_new = [lb_base(:).', tracking_lb_new];
+ub_track_new = [ub_base(:).', tracking_ub_new];
+
+% creation of previous seeds using respective bounds 
 x_previous = agriVarStruct2Array(var_track, params_track);
-x_previous = clamp_vector(x_previous, lb_track, ub_track);
 
-x_flat = x_previous;
+% create previous seeds using respective bounds 
+x_previous_old = clamp_vector(x_previous, lb_track_old, ub_track_old);
+x_previous_new = clamp_vector(x_previous, lb_track_new, ub_track_new);
+
+% use flat baseline
+x_flat = x_previous_old;
 x_flat(8:end) = 0;
-
 variants = make_variant_template();
-variants(end+1) = make_variant('fixed_axis_baseline', params_fixed, lb_base(:).', ub_base(:).', ...
+variants(end+1) = make_variant('fixedAxisBaseline', params_fixed, lb_base(:).', ub_base(:).', ...
     perturb_layout_population(x_fixed, lb_base(:).', ub_base(:).', opts.PopulationSize, opts.LayoutNoiseFraction));
-variants(end+1) = make_variant('single_axis_previous_seed', params_track, lb_track, ub_track, ...
-    perturb_tracking_population(x_previous, lb_track, ub_track, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
-variants(end+1) = make_variant('single_axis_flat_seed', params_track, lb_track, ub_track, ...
-    perturb_tracking_population(x_flat, lb_track, ub_track, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
-variants(end+1) = make_variant('single_axis_random_angles', params_track, lb_track, ub_track, ...
-    random_tracking_population(x_previous, lb_track, ub_track, opts.PopulationSize));
+
+variants(end+1) = make_variant('SingleAxisNOSeed', params_track, lb_track_old, ub_track_old, ...
+    random_tracking_population(x_previous_old, lb_track_old, ub_track_old, opts.PopulationSize));
+
+% the old seeding method without Gaussian smoothing and no angle forcing at night
+variants(end+1) = make_variant('SingleAxisOLDRules', params_track, lb_track_old, ub_track_old, ...
+    perturb_tracking_population(x_previous_old, lb_track_old, ub_track_old, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
+
+% new method with smoothing and no tracking at night
+variants(end+1) = make_variant('SingleAxisNEWRules', params_track, lb_track_new, ub_track_new, ...
+    perturb_tracking_population_smooth(x_previous_new, lb_track_new, ub_track_new, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
 
 if ~isempty(opts.CustomSeedFile)
-    x_custom = load_custom_seed(opts.CustomSeedFile, x_previous, params_track, lb_track, ub_track);
-    variants(end+1) = make_variant('single_axis_new_seed', params_track, lb_track, ub_track, ...
-        perturb_tracking_population(x_custom, lb_track, ub_track, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
+    x_custom = load_custom_seed(opts.CustomSeedFile, x_previous, params_track, lb_track_new, ub_track_new);
+    variants(end+1) = make_variant('singleAxisNewSeed', params_track, lb_track_new, ub_track_new, ...
+        perturb_tracking_population_smooth(x_custom, lb_track_new, ub_track_new, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
 end
 
 fprintf('\nGA seed initialization comparison\n');
@@ -112,6 +138,11 @@ end
 fig_objectives = plot_objective_comparison(T, Tga);
 fig_tracking = plot_seed_tracking(variants);
 
+%new figure with just single axis optimization for weighted sum
+if ~isempty(Tga)
+    fig_best_single_axis = plot_best_single_axis_tracking(variants, Tga);
+end
+
 results = struct();
 results.initial_population = T;
 results.ga_runs = Tga;
@@ -129,6 +160,8 @@ if opts.SaveOutputs
     writetable(T, fullfile(outdir, 'initial_population_metrics.csv'));
     if ~isempty(Tga)
         writetable(Tga, fullfile(outdir, 'short_ga_metrics.csv'));
+        % NEW: Save the exclusive Single-Axis plot
+        saveas(fig_best_single_axis, fullfile(outdir, 'final_single_axis_tracking.png'));
     end
     saveas(fig_objectives, fullfile(outdir, 'seed_objective_comparison.png'));
     saveas(fig_tracking, fullfile(outdir, 'seed_tracking_angles.png'));
@@ -136,7 +169,14 @@ if opts.SaveOutputs
     fprintf('\nSaved comparison outputs to %s\n', outdir);
 else
     fprintf('\nNo files written. Pass ''SaveOutputs'', true to save CSV/PNG/MAT outputs.\n');
+
+   
 end
+
+
+
+
+
 end
 
 function opts = parse_options(varargin)
@@ -174,13 +214,18 @@ v.population = population;
 end
 
 function pop = perturb_layout_population(x_seed, lb, ub, pop_size, noise_fraction)
-num_vars = numel(x_seed);
-pop = zeros(pop_size, num_vars);
-pop(1,:) = clamp_vector(x_seed, lb, ub);
-for i = 2:pop_size
-    noise = noise_fraction * (ub - lb) .* randn(1, num_vars);
-    pop(i,:) = clamp_vector(x_seed + noise, lb, ub);
-end
+    num_vars = numel(x_seed);
+    pop = zeros(pop_size, num_vars);
+    pop(1,:) = clamp_vector(x_seed, lb, ub);
+    for i = 2:pop_size
+        candidate = x_seed;
+        
+        % only perturbing variable 5 (the Fixed Tilt angle)
+        noise = noise_fraction * (ub(5) - lb(5)) * randn(1);
+        candidate(5) = candidate(5) + noise;
+        
+        pop(i,:) = clamp_vector(candidate, lb, ub);
+    end
 end
 
 function pop = perturb_tracking_population(x_seed, lb, ub, pop_size, noise_fraction, max_tilt)
@@ -193,6 +238,32 @@ for i = 2:pop_size
     candidate(idx) = candidate(idx) + noise_fraction * max_tilt .* randn(1, numel(idx));
     pop(i,:) = clamp_vector(candidate, lb, ub);
 end
+end
+
+%added in Gaussian smoothing population with one initial guess and the rest
+%random
+function pop = perturb_tracking_population_smooth(x_seed, lb, ub, pop_size, noise_fraction, max_tilt)
+    num_vars = numel(x_seed);
+    pop = zeros(pop_size, num_vars);
+    
+    % adding one member of the perfect, physics-based seed
+    pop(1,:) = clamp_vector(x_seed, lb, ub);
+    
+    % rest of the members are random but smooth
+    for i = 2:pop_size
+        candidate = x_seed; % Keep layout variables (1-7) the same as base
+        idx = 8:num_vars;   % Target the 96 tracking variables
+        
+        % Generate random angles between the lower and upper bounds
+        span = ub(idx) - lb(idx);
+        candidate(idx) = lb(idx) + rand(1, numel(idx)) .* span;  
+        
+        % Smooth the random curve so it's physically possible
+        candidate(idx) = smoothdata(candidate(idx), 'gaussian', 3);
+        
+        % Clamp against lb/ub (This forces the night hours back to 0)
+        pop(i,:) = clamp_vector(candidate, lb, ub);
+    end
 end
 
 function pop = random_tracking_population(x_seed, lb, ub, pop_size)
@@ -272,17 +343,56 @@ opts = optimoptions('ga', ...
     'Display', 'off', ...
     'InitialPopulationMatrix', variant.population);
 
-t0 = tic;
-[x_best, f_best, exitflag, output] = ga(@(x) agrivoltaic_social_cost_of_carbon_wrapper(x, variant.params), ...
-    num_vars, [], [], [], [], variant.lb, variant.ub, [], opts);
-elapsed = toc(t0);
+A = []; B = [];
+% only apply the 15-degree slew rate to our new variant
+if contains(variant.name, 'NEW_Rules') && isfield(variant.params, 'tracking_mode') && variant.params.tracking_mode == 1
+    max_slew = deg2rad(15);
+    total_cons = 4 * 23 * 2;
+    A = zeros(total_cons, num_vars);
+    B = ones(total_cons, 1) * max_slew;
+    row = 1;
+    for s = 1:4
+        offset = 7 + (s-1)*24;
+        for h = 1:23
+            v1 = offset + h; v2 = offset + h + 1;
+            A(row, v1) = -1; A(row, v2) = 1;  row = row + 1;
+            A(row, v1) = 1;  A(row, v2) = -1; row = row + 1;
+        end
+    end
+end
+
+
+% update the ga() call to use A and B
+opts.InitialPopulationMatrix = variant.population; % just to ensure it uses the right pop
+
+delta = 0.5; % Balance social profit and crop growth equally
+
+t0 = tic; % start timer before GA call
+[x_best, f_best, exitflag, output] = ga(@(x) agrivoltaic_weighted_sum_social_benefit_wrapper(x, variant.params, delta), ...
+    num_vars, A, B, [], [], variant.lb, variant.ub, [], opts);
+
+elapsed = toc(t0); % stop timer
+
+%evaluate x_best to get the broken-out metrics
+raw = agrivoltaic_wrapper(x_best, variant.params);
 trk = tracking_matrix(x_best, variant.params);
 
 row = make_ga_row_template();
+row.x_final(1:numel(x_best)) = x_best; 
+
 row.variant = variant.name;
 row.max_generations = max_generations;
 row.objective_cost = f_best;
-row.social_value = -f_best;
+
+% specific metrics to plot the diamond
+row.social_value = -raw(3); 
+row.profit = raw(2);
+row.emissions_value = 190 * (raw(1) / 1000);
+row.pv_revenue = raw(4);
+row.crop_revenue = raw(5);
+row.yearly_biomass = raw(6);
+row.total_panels = raw(7);
+
 row.exitflag = exitflag;
 row.function_count = output.funccount;
 row.elapsed_seconds = elapsed;
@@ -317,16 +427,26 @@ row.max_tracking_deg = NaN;
 end
 
 function row = make_ga_row_template()
-row = struct();
-row.variant = '';
-row.max_generations = NaN;
-row.objective_cost = NaN;
-row.social_value = NaN;
-row.exitflag = NaN;
-row.function_count = NaN;
-row.elapsed_seconds = NaN;
-row.mean_tracking_deg = NaN;
-row.max_tracking_deg = NaN;
+    row = struct();
+    row.variant = '';
+    row.max_generations = NaN;
+    row.objective_cost = NaN;
+    
+    % added in new metrics
+    row.social_value = NaN;
+    row.profit = NaN;
+    row.emissions_value = NaN;
+    row.pv_revenue = NaN;
+    row.crop_revenue = NaN;
+    row.yearly_biomass = NaN;
+    row.total_panels = NaN;
+    
+    row.exitflag = NaN;
+    row.function_count = NaN;
+    row.elapsed_seconds = NaN;
+    row.mean_tracking_deg = NaN;
+    row.max_tracking_deg = NaN;
+    row.x_final = zeros(1, 103);
 end
 
 function fig = plot_objective_comparison(T, Tga)
@@ -395,4 +515,47 @@ end
 
 function escaped = escape_single_quotes(txt)
 escaped = strrep(txt, '''', '''''');
+end
+
+function fig = plot_best_single_axis_tracking(variants, Tga)
+    fig = figure('Name', 'Final Single-Axis Competitors', 'NumberTitle', 'off', ...
+        'Color', 'w', 'Position', [150 150 1250 760]);
+    tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
+    
+    season_names = {'Spring', 'Summer', 'Fall', 'Winter'};
+    hours = 0:23;
+    colors = lines(numel(variants));
+    
+    for s = 1:4
+        nexttile;
+        hold on;
+        for i = 1:numel(variants)
+            % Skip the fixed axis variant entirely
+            if contains(variants(i).name, 'Fixed')
+                continue; 
+            end
+            
+            % Only plot if the GA actually ran and generated x_final
+            if ~isempty(Tga) && i <= height(Tga)
+                x_plot = Tga.x_final(i, 1:numel(variants(i).lb)); 
+                
+                trk = tracking_matrix(x_plot, variants(i).params);
+                y = rad2deg(trk(s,:));
+                
+                % Clean up the variant name for the legend
+                display_name = strrep(variants(i).name, '_', ' ');
+                
+                plot(hours, y, '-o', 'LineWidth', 1.8, 'MarkerSize', 4, ...
+                    'Color', colors(i,:), 'DisplayName', display_name);
+            end
+        end
+        yline(0, 'k--', 'HandleVisibility', 'off');
+        grid on;
+        xlabel('Hour');
+        ylabel('Tracking angle (deg)');
+        title([season_names{s} ' Final Optimized Tracking']);
+        xlim([0 23]);
+        hold off;
+    end
+    legend('Location', 'southoutside', 'Orientation', 'horizontal');
 end

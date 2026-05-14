@@ -19,37 +19,43 @@ x0 = agriVarStruct2Array(agriVar, agriParams);
 pop_size = 50;
 
 % build a better initial population
+
 % Make sure consistent
 num_vars = length(lb);
 pop = zeros(pop_size, num_vars);
-% 1First member = physics-based smart guess
+
+% 1. First member = physics-based smart guess (Perfect Seed)
 pop(1,:) = x0;
 
-% population = small perturbations
+% 2. Population = small, smooth perturbations (Random Seeds)
 for i = 2:pop_size
     candidate = x0;
-
+    
     if agriParams.tracking_mode == 1
-        % Only perturb tracking angles (more stable)
         idx = 8:num_vars;
-
+        
+        % Add random noise
         noise = 0.1 * agriParams.PV_max_tilt * randn(size(idx));
         candidate(idx) = candidate(idx) + noise;
-
-        % Clamp
+        
+        % Smooth the random tracking curve so it doesn't break the 15-deg/hr slew limit!
+        candidate(idx) = smoothdata(candidate(idx), 'gaussian', 3);
+        
+        % Clamp (This automatically forces nighttime hours back to 0!)
         candidate(idx) = max(candidate(idx), lb(idx));
         candidate(idx) = min(candidate(idx), ub(idx));
+        
     else
         % Fixed-axis: perturb all vars slightly
         noise = 0.05 * (ub - lb) .* randn(1, num_vars);
         candidate = candidate + noise;
-
         candidate = max(candidate, lb);
         candidate = min(candidate, ub);
     end
-
+    
     pop(i,:) = candidate;
 end
+
 %1 for basic GA
 if GA_SELECTOR == 1
     rng(1);
@@ -74,9 +80,41 @@ elseif GA_SELECTOR == 4
 end
 
 
-% Set Up GA
+%% Set Up GA Constraints
 A = []; B = []; Aeq = []; Beq = [];
 nlcon = [];
+
+if agriParams.tracking_mode == 1
+    max_slew_per_hour = deg2rad(15); % Max 15 degree rotation per hour
+    
+    % We have 4 seasons * 24 hours = 96 tracking variables.
+    % In our flat array, these are indices 8 through 103.
+    num_steps = 23; % 23 hour-to-hour transitions per day
+    num_constraints_per_season = num_steps * 2; % 2 rules per step (positive and negative limit)
+    total_constraints = 4 * num_constraints_per_season;
+    
+    A = zeros(total_constraints, num_vars);
+    B = ones(total_constraints, 1) * max_slew_per_hour;
+    
+    row = 1;
+    for s = 1:4
+        offset = 7 + (s-1)*24; % Offset to the start of this season's variables
+        for h = 1:23
+            v1 = offset + h;
+            v2 = offset + h + 1;
+            
+            % Constraint 1: x(h+1) - x(h) <= max_slew
+            A(row, v1) = -1;
+            A(row, v2) = 1;
+            row = row + 1;
+            
+            % Constraint 2: x(h) - x(h+1) <= max_slew (prevents negative jumps)
+            A(row, v1) = 1;
+            A(row, v2) = -1;
+            row = row + 1;
+        end
+    end
+end
 
 % Run GA
 tic;

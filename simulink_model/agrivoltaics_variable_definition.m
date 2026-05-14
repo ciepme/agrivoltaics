@@ -155,16 +155,35 @@ agriVar.PV_x_p = 0.1;         % panel distance (m)
 %% if single-axis tracking, set bounds + physics-based initialization
 if agriParams.tracking_mode == 1
     
-    % Create bounds for 96 tracking variables
+    %  creation of basic tracking based only on solar power
+    agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
+    
+    % generic bounds for the GA
     tracking_lb = zeros(1, 96); 
-    tracking_ub = ones(1, 96) * agriParams.PV_max_tilt; 
+    tracking_ub = zeros(1, 96); 
+    
+    seasons = {'spring', 'summer', 'fall', 'winter'};
+    max_tilt = agriParams.PV_max_tilt;
+    
+    for s = 1:4
+        season_name = seasons{s};
+        
+        % Check your weather struct for daytime (altitude > 0)
+        beta_s = agriParams.weather.(season_name).beta_s; 
+        is_daytime = beta_s > 0;
+        
+        % Map day/night bounds to a flat 1x96 array segment
+        start_idx = (s-1)*24 + 1;
+        end_idx = s*24;
+        
+        % If daytime, allow bounds [-max_tilt, +max_tilt]. If night, bounds are [0, 0].
+        tracking_lb(start_idx:end_idx) = -max_tilt .* is_daytime;
+        tracking_ub(start_idx:end_idx) =  max_tilt .* is_daytime;
+    end
     
     % Append to existing bounds
     lb = [lb, tracking_lb]; 
     ub = [ub, tracking_ub]; 
-
-    % Physics-based initialization
-    agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
 
 else
     % Required for Simulink bus consistency
