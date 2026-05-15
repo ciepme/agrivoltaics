@@ -62,14 +62,20 @@ function [P_daily, P_hourly] = calc_daily_pv(season_weather, phi, sigma, n_p, A_
 %Toggle logic for single-axis versus fixed axis tracking
         if params.tracking_mode == 1
             % SINGLE-AXIS TRACKING (Optimizer Driven)
-            % Pull the angle the optimizer guessed for this exact hour
-            sigma_current = hourly_angles(i); 
+            raw_angle = hourly_angles(i); 
             
-            % Enforce physical motor limits (clamp between 0 and max_tilt)
-            sigma_current = params.PV_max_tilt * tanh(sigma_current / params.PV_max_tilt);
+            % The physical tilt of the panel is the absolute magnitude of the roll
+            sigma_current = abs(raw_angle);
             
-            % Single-axis trackers face East in AM, West in PM.
-            phi_current = (pi/2) * tanh(5 * phi_s(i));
+            % The tracker axis faces South, so as it rolls, the panel surface 
+            % faces perfectly East (+pi/2) or perfectly West (-pi/2).
+            if raw_angle < 0
+                phi_current = pi/2;  % Rolled East
+            elseif raw_angle > 0
+                phi_current = -pi/2; % Rolled West
+            else
+                phi_current = phi;   % Flat at solar noon
+            end
             
         else
             % FIXED AXIS

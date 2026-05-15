@@ -91,15 +91,19 @@ variants = make_variant_template();
 variants(end+1) = make_variant('fixedAxisBaseline', params_fixed, lb_base(:).', ub_base(:).', ...
     perturb_layout_population(x_fixed, lb_base(:).', ub_base(:).', opts.PopulationSize, opts.LayoutNoiseFraction));
 
-variants(end+1) = make_variant('SingleAxisNOSeed', params_track, lb_track_old, ub_track_old, ...
-    random_tracking_population(x_previous_old, lb_track_old, ub_track_old, opts.PopulationSize));
 
-% the old seeding method without Gaussian smoothing and no angle forcing at night
-variants(end+1) = make_variant('SingleAxisOLDRules', params_track, lb_track_old, ub_track_old, ...
-    perturb_tracking_population(x_previous_old, lb_track_old, ub_track_old, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
+% 100% random no seeding
+variants(end+1) = make_variant('SingleAxisNOSeed', params_track, lb_track_new, ub_track_new, ...
+    random_tracking_population(x_previous_new, lb_track_new, ub_track_new, opts.PopulationSize));
 
-% new method with smoothing and no tracking at night
-variants(end+1) = make_variant('SingleAxisNEWRules', params_track, lb_track_new, ub_track_new, ...
+% perturbed seed with  no smoothing (Old Population Rules)
+% (Adds jagged noise directly on top of the ideal physics seed)
+variants(end+1) = make_variant('SingleAxisPerturbedSeed', params_track, lb_track_new, ub_track_new, ...
+    perturb_tracking_population(x_previous_new, lb_track_new, ub_track_new, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
+
+% (Uses the ideal physics seed for Member 1. Members 2+ completely overwrite 
+% the tracking angles with purely random, Gaussian-smoothed curves)
+variants(end+1) = make_variant('SingleAxisRandomSmoothed', params_track, lb_track_new, ub_track_new, ...
     perturb_tracking_population_smooth(x_previous_new, lb_track_new, ub_track_new, opts.PopulationSize, opts.TrackingNoiseFraction, params_track.PV_max_tilt));
 
 if ~isempty(opts.CustomSeedFile)
@@ -284,8 +288,8 @@ x = min(x, ub(:).');
 end
 
 function theta = clamp_tracking(theta, max_tilt)
-theta = max(theta, 0);
-theta = min(theta, max_tilt);
+    theta = max(theta, -max_tilt); % allow negative tracking
+    theta = min(theta, max_tilt);
 end
 
 function x_custom = load_custom_seed(seed_file, x_default, params, lb, ub)

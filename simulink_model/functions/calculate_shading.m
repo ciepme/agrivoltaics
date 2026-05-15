@@ -39,23 +39,17 @@ function SF_season = calc_seasonal_shading(weather_season, PV_azimuth, PV_tilt, 
             
 %Toggle logic for single-axis versus fixed axis tracking
 if params.tracking_mode == 1
-    % SINGLE-AXIS TRACKING
-    sigma_current = rad2deg(hourly_angles(t)); 
-    sigma_current = max(0, min(sigma_current, rad2deg(params.PV_max_tilt)));
-    
-    % tilt direction - Positive = East roll, Negative = West roll
-    if sun_az_deg > 0
-        tilt_current = sigma_current;  
-    else
-        tilt_current = -sigma_current; 
-    end
-    
-    % Lock the physical layout so the rows don't spin like a compass
-    phi_current = PV_azimuth; 
-else
-    % FIXED AXIS
-    tilt_current = PV_tilt;
-    phi_current = PV_azimuth;
+                % SINGLE-AXIS TRACKING
+                % Because we fixed the GA bounds, hourly_angles ALREADY contains 
+                % negative numbers for morning (East) and positive for afternoon (West). 
+                tilt_current = rad2deg(hourly_angles(t)); 
+                
+                % Lock the farm's torque tube orientation (0 = South)
+                phi_current = PV_azimuth; 
+            else
+                % FIXED AXIS
+                tilt_current = PV_tilt;
+                phi_current = PV_azimuth;
 end
 
 % Pass the tilt_current, phi_current, and params.tracking_mode down:

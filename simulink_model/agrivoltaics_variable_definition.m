@@ -134,8 +134,8 @@ end
 agriVar.PV_z_p = 3.79;           % panel height (m)
 agriVar.PV_l_p = 2.43;           % panel length (m)
 agriVar.PV_w_p = 1.45;           % panel width (m)
-agriVar.PV_phi = 0.68;           % azimuth (rad)
-agriVar.PV_sigma = 1.5;      % tilt (rad)
+agriVar.PV_phi = 0;           % azimuth (rad)
+agriVar.PV_sigma = 0;      % tilt (rad)
 agriVar.PV_y_p = 2.0;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
