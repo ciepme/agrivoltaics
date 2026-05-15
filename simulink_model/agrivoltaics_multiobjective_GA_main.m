@@ -8,13 +8,10 @@ addpath(genpath(pwd));
 
 agrivoltaics_variable_definition;
 
-%modify parameters
-agriParams.crop_elec_price = 0.054; % changed from 0.5; 0.054 is new nominal
-
 %User define statements
 GA_SELECTOR = 1;
 file_suffix = "_berry_pop100";
-lambda_fidelity = 0.1;
+lambda_fidelity = 0.5;
 
 lambda = 0:lambda_fidelity:1;
 
@@ -77,16 +74,6 @@ elseif GA_SELECTOR == 2
     options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
         'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
         'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', 'UseParallel', true);
-elseif GA_SELECTOR == 3
-    rng(3);
-    options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
-        'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', 'UseParallel', true, x0);
-elseif GA_SELECTOR == 4
-    rng(4);
-    options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
-        'FunctionTolerance', 1e-4,'MaxStallGenerations', stall,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', 'UseParallel', true, x0);
 end
 
 %% Set Up GA
