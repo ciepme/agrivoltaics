@@ -58,14 +58,18 @@ var_track = agriVar_base;
 var_track.tracking_angles = generate_physics_tracking(params_track, var_track);
 var_track.tracking_angles = clamp_tracking(var_track.tracking_angles, params_track.PV_max_tilt);
 
-%%
+%% Extract ONLY the 7 layout bounds in case the definition script already added tracking
+lb_layout = lb_base(1:7);
+ub_layout = ub_base(1:7);
+
 % OLD BOUNDS 
-lb_track_old = [lb_base(:).', zeros(1, 96)];
-ub_track_old = [ub_base(:).', ones(1, 96) * params_track.PV_max_tilt];
+lb_track_old = [lb_layout(:).', zeros(1, 96)];
+ub_track_old = [ub_layout(:).', ones(1, 96) * params_track.PV_max_tilt];
 
 % NEW BOUNDS adds in logic so that no tracking at night
 tracking_lb_new = zeros(1, 96); 
 tracking_ub_new = zeros(1, 96); 
+
 seasons = {'spring', 'summer', 'fall', 'winter'};
 for s = 1:4
     is_daytime = params_track.weather.(seasons{s}).beta_s > 0;
@@ -74,8 +78,9 @@ for s = 1:4
     tracking_lb_new(start_idx:end_idx) = -params_track.PV_max_tilt .* is_daytime;
     tracking_ub_new(start_idx:end_idx) =  params_track.PV_max_tilt .* is_daytime;
 end
-lb_track_new = [lb_base(:).', tracking_lb_new];
-ub_track_new = [ub_base(:).', tracking_ub_new];
+
+lb_track_new = [lb_layout(:).', tracking_lb_new];
+ub_track_new = [ub_layout(:).', tracking_ub_new];
 
 % creation of previous seeds using respective bounds 
 x_previous = agriVarStruct2Array(var_track, params_track);
@@ -88,9 +93,8 @@ x_previous_new = clamp_vector(x_previous, lb_track_new, ub_track_new);
 x_flat = x_previous_old;
 x_flat(8:end) = 0;
 variants = make_variant_template();
-variants(end+1) = make_variant('fixedAxisBaseline', params_fixed, lb_base(:).', ub_base(:).', ...
-    perturb_layout_population(x_fixed, lb_base(:).', ub_base(:).', opts.PopulationSize, opts.LayoutNoiseFraction));
-
+variants(end+1) = make_variant('fixedAxisBaseline', params_fixed, lb_layout, ub_layout, ...
+    perturb_layout_population(x_fixed, lb_layout, ub_layout, opts.PopulationSize, opts.LayoutNoiseFraction));
 
 % 100% random no seeding
 variants(end+1) = make_variant('SingleAxisNOSeed', params_track, lb_track_new, ub_track_new, ...
@@ -287,7 +291,7 @@ x = max(x(:).', lb(:).');
 x = min(x, ub(:).');
 end
 
-function theta = clamp_tracking(theta, max_tilt)
+function theta = 4king(theta, max_tilt)
     theta = max(theta, -max_tilt); % allow negative tracking
     theta = min(theta, max_tilt);
 end

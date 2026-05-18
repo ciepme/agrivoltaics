@@ -42,22 +42,21 @@ for i = 2:pop_size
     candidate = x0;
 
     if agriParams.tracking_mode == 1
-        % Only perturb tracking angles (more stable)
-        idx = 8:num_vars;
-
-        noise = 0.1 * agriParams.PV_max_tilt * randn(size(idx));
-        candidate(idx) = candidate(idx) + noise;
-
-        % Clamp
-        candidate(idx) = max(candidate(idx), lb(idx));
+        
+        % random generation of population
+        span = ub(idx) - lb(idx);
+        random_angles = lb(idx) + rand(1, length(idx)) .* span;
+        
+        % smoothing so it doesn't break 15 degree slew limit
+        smoothed_angles = smoothdata(random_angles, 'gaussian', 5);
+        
+        % clamping to set night time hours to 0 degree
+        candidate(idx) = max(smoothed_angles, lb(idx));
         candidate(idx) = min(candidate(idx), ub(idx));
     else
-        % Fixed-axis: perturb all vars slightly
-        noise = 0.05 * (ub - lb) .* randn(1, num_vars);
-        candidate = candidate + noise;
-
-        candidate = max(candidate, lb);
-        candidate = min(candidate, ub);
+        % Fixed-axis pure random
+        span = ub(1:num_vars) - lb(1:num_vars);
+        candidate(1:num_vars) = lb(1:num_vars) + rand(1, num_vars) .* span;
     end
 
     pop(i,:) = candidate;

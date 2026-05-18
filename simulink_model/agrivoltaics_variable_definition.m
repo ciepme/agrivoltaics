@@ -24,7 +24,7 @@ ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
 % 0 = Fixed Axis, 1 = Single-Axis Tracking 
 % I like to run: bdclose('all'); clear; clear classes; clear functions;
 % clc; when switching between fixed axis and single axis modes
-agriParams.tracking_mode = 0; 
+agriParams.tracking_mode = 1; 
 
 % Max rotation angle for the single-axis tracker (mechanical limit before
 % hitting motor housing or sturcture
@@ -206,6 +206,29 @@ clear(info_2.busName);
 % Clean up
 clear info_1 info_2;
 
+% =========================================================================
+% DYNAMIC TRACKING BOUNDS
+% Allow negative angles (East) during the day, force 0 at night
+% =========================================================================
+if isfield(agriParams, 'tracking_mode') && agriParams.tracking_mode == 1
+    % First, make sure lb and ub are actually 103 elements long. 
+    % If they are only 7 elements long, pad them out.
+    if length(lb) < 103
+        lb = [lb(1:7), zeros(1, 96)];
+        ub = [ub(1:7), zeros(1, 96)];
+    end
+    
+    seasons = {'spring', 'summer', 'fall', 'winter'};
+    for s = 1:4
+        is_daytime = agriParams.weather.(seasons{s}).beta_s > 0;
+        start_idx = 7 + (s-1)*24 + 1;
+        end_idx = 7 + s*24;
+        
+        % Overwrite the bounds using the dynamic daytime mask
+        lb(start_idx:end_idx) = -agriParams.PV_max_tilt .* is_daytime;
+        ub(start_idx:end_idx) =  agriParams.PV_max_tilt .* is_daytime;
+    end
+end
 
 %% helper functions
 function ci_avg_hourly = get_season_hourly_ci(data_dir, file_season)

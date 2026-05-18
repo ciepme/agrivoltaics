@@ -106,12 +106,12 @@ function [P_daily, P_hourly] = calc_daily_pv(season_weather, phi, sigma, n_p, A_
     
     p_hour = n_p * A_p * R;          % hourly power per panel
     P_hourly(i) = p_hour*total_panels; % hourly power for entire plot
-    p_tot = p_tot + P_hourly(i);
+    p_tot = p_tot + P_hourly(i); % in kWh
     
     end
     P_daily=p_tot;
     if isnan(P_daily)
         P_daily = 0;
     end
-    P_hourly(isnan(P_hourly)) = 0;
+    P_hourly(isnan(P_hourly)) = 0; 
 end

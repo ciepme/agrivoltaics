@@ -24,33 +24,32 @@ pop_size = 50;
 num_vars = length(lb);
 pop = zeros(pop_size, num_vars);
 
-% 1. First member = physics-based smart guess (Perfect Seed)
+% 1. first member = physics-based smart guess (from
+% generate_physics_tracking)
 pop(1,:) = x0;
 
 % 2. Population = small, smooth perturbations (Random Seeds)
 for i = 2:pop_size
     candidate = x0;
     
-    if agriParams.tracking_mode == 1
+if agriParams.tracking_mode == 1
         idx = 8:num_vars;
         
-        % Add random noise
-        noise = 0.1 * agriParams.PV_max_tilt * randn(size(idx));
-        candidate(idx) = candidate(idx) + noise;
+        % random generation of population
+        span = ub(idx) - lb(idx);
+        random_angles = lb(idx) + rand(1, length(idx)) .* span;
         
-        % Smooth the random tracking curve so it doesn't break the 15-deg/hr slew limit!
-        candidate(idx) = smoothdata(candidate(idx), 'gaussian', 3);
+        % smoothing so it doesn't break 15 degree slew limit
+        smoothed_angles = smoothdata(random_angles, 'gaussian', 5);
         
-        % Clamp (This automatically forces nighttime hours back to 0!)
-        candidate(idx) = max(candidate(idx), lb(idx));
+        % clamping to set night time hours to 0 degree
+        candidate(idx) = max(smoothed_angles, lb(idx));
         candidate(idx) = min(candidate(idx), ub(idx));
         
     else
-        % Fixed-axis: perturb all vars slightly
-        noise = 0.05 * (ub - lb) .* randn(1, num_vars);
-        candidate = candidate + noise;
-        candidate = max(candidate, lb);
-        candidate = min(candidate, ub);
+        % Fixed-axis pure random
+        span = ub(1:num_vars) - lb(1:num_vars);
+        candidate(1:num_vars) = lb(1:num_vars) + rand(1, num_vars) .* span;
     end
     
     pop(i,:) = candidate;

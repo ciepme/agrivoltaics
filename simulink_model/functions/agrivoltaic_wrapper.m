@@ -22,8 +22,8 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
 
     %fprintf('P: %.2f\n', out.p.Data);
 
-    E = out.e.Data;
-    P = out.p.Data;
+    E = out.e.Data; % total CO2 displaced via solar power generation across 1 year
+    P = out.p.Data; % profit
 
     social_cost = -1.*(P + 190 .* (E ./ 1000));
 
@@ -31,7 +31,8 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
     total_panels = out.total_panels.Data;
     pv_revenue = out.pv_revenue.Data;
     yearly_biomass = out.yearly_biomass.Data;
+    yearly_energy = out.energy_output.Data;
 
-    results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels];
+    results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels, yearly_energy];
     closeExcel;
 end
