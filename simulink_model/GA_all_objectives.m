@@ -21,9 +21,6 @@ max_gen = 8; % Adjust based on your time constraints
 num_vars = length(lb);
 
 %% 1. Generate the Population
-% =========================================================================
-% THE MISSING LINK: Actually generate the physics angles!
-% =========================================================================
 if agriParams.tracking_mode == 1
     % Calculate the true sun tracking curve
     agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
@@ -33,10 +30,10 @@ if agriParams.tracking_mode == 1
     agriVar.tracking_angles = min(agriVar.tracking_angles,  agriParams.PV_max_tilt);
 end
 
-% NOW build x0. It will finally contain the real math instead of defaults!
+% build x0
 x0 = agriVarStruct2Array(agriVar, agriParams);
 
-% FORCE x0 TO STRICTLY OBEY LOWER AND UPPER BOUNDS (Ensures night is exactly 0)
+% force x0 to obey bounds
 x0 = max(x0(:).', lb(:).');
 x0 = min(x0(:).', ub(:).');
 
@@ -106,9 +103,8 @@ x_best_set = zeros(num_targets, num_vars);
 
 for i = 1:num_targets
     current_target = targets_to_run{i};
-    fprintf('\n======================================================\n');
-    fprintf('STARTING OPTIMIZATION FOR: MAXIMIZE %s\n', current_target);
-    fprintf('======================================================\n');
+
+    fprintf('Starting Maximization for %s\n', current_target);
     
     tic;
     [x_best, fval, exitflag, output] = ga(@(x) targeted_objective_wrapper(x, agriParams, current_target), ...
@@ -131,7 +127,6 @@ for i = 1:num_targets
 end
 
 %% 4. Plot Comparative Graphic
-% We use tiledlayout so the different scales (Millions vs Thousands) don't ruin the chart
 if num_targets > 1
     fig = figure('Name', 'Objective Comparison', 'Color', 'w', 'Position', [100, 100, 1000, 800]);
     t = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
@@ -166,9 +161,9 @@ end
 % Save workspace data
 save('agrivoltaic_comparative_optimization_data.mat', 'targets_to_run', 'results_matrix', 'x_best_set');
 
-%% --------------------------------------------------------------------
-% PLOT 2: PHYSICAL DESIGN VARIABLES COMPARISON
-% --------------------------------------------------------------------
+%% 
+% Plot physical design comparison
+
 fig_layout = figure('Name', 'Optimal Layout Comparison', 'Color', 'w', 'Position', [150, 150, 1200, 600]);
 t_layout = tiledlayout(2, 4, 'TileSpacing', 'compact', 'Padding', 'compact');
 title(t_layout, 'Optimal Physical Design Variables by Objective', 'FontWeight', 'bold', 'FontSize', 14);
@@ -192,9 +187,11 @@ for v = 1:7
     ylabel('Value');
 end
 
-%% --------------------------------------------------------------------
-% PLOT 3: TRACKING CURVES (IF SINGLE-AXIS IS ENABLED)
-% --------------------------------------------------------------------
+saveas(fig_layout, 'graphs/optimal_layout_comparison.png');
+fprintf('Saved layout comparison chart to graphs/optimal_layout_comparison.png\n');
+
+%%
+% Plot tracking curves for single-axis mode
 if agriParams.tracking_mode == 1
     seasons = {'Spring', 'Summer', 'Fall', 'Winter'};
     fig_track = figure('Name', 'Optimal Tracking Curves', 'Color', 'w', 'Position', [200, 200, 1000, 800]);
@@ -224,7 +221,7 @@ if agriParams.tracking_mode == 1
                  'Color', colors(i,:), 'DisplayName', targets_to_run{i});
         end
         
-        % Plot the "Ideal Physics" baseline for comparison!
+        % Plot the "Ideal Physics" baseline for comparison
         ideal_angles_deg = rad2deg(agriVar.tracking_angles(s, :));
         plot(hours, ideal_angles_deg, '--k', 'LineWidth', 1.5, 'DisplayName', 'Pure Sun Tracking');
         
@@ -233,18 +230,18 @@ if agriParams.tracking_mode == 1
         ylim([-max_tilt_deg - 5, max_tilt_deg + 5]);
         xticks(1:2:24);
         
-        if s == 1 % Only put legend on the first tile to save space
+        if s == 1
             legend('Location', 'best');
         end
     end
+    saveas(fig_track, 'graphs/optimal_tracking_curves.png');
+    fprintf('Saved tracking curves chart to graphs/optimal_tracking_curves.png\n');
 end
 
-%% ========================================================================
-% HELPER FUNCTION
-% ========================================================================
+%% Helper function
 function fitness = targeted_objective_wrapper(x, params, target)
     % Run the standard wrapper to get all outputs
-    % raw = [Emissions(1), Profit(2), SocialCost(3), PVRev(4), CropRev(5), Biomass(6), Panels(7)]
+    % raw = [Emissions(1), Profit(2), SocialCost(3), PVRev(4), CropRev(5), Biomass(6), Panels(7), Energy(8)]
     raw = agrivoltaic_wrapper(x, params);
     
     % GA strictly MINIMIZES. So to maximize something, we return its negative value.
