@@ -16,7 +16,7 @@ if ismember('ALL', targets_to_run)
     targets_to_run = {'PROFIT', 'EMISSIONS', 'POWER', 'CROP'};
 end
 
-pop_size = 8;
+pop_size = 50;
 max_gen = 8; % Adjust based on your time constraints
 num_vars = length(lb);
 
