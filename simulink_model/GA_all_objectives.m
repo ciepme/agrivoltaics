@@ -19,8 +19,10 @@ end
 pop_size = 8;
 max_gen = 8; % Adjust based on your time constraints
 num_vars = length(lb);
+moniker = "pop100";
 
 %% 1. Generate the Population
+rng(1);
 if agriParams.tracking_mode == 1
     % Calculate the true sun tracking curve
     agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
@@ -74,7 +76,7 @@ end
 %% 2. Set Up GA Options and Constraints
 options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', max_gen, ...
     'FunctionTolerance', 1e-4, 'Display', 'iter', ...
-    'InitialPopulationMatrix', pop, 'UseParallel', true);
+    'InitialPopulationMatrix', pop, 'UseParallel', false);
 
 A = []; B = []; Aeq = []; Beq = [];
 if agriParams.tracking_mode == 1
@@ -154,7 +156,7 @@ if num_targets > 1
     bar(target_labels, results_matrix(:, 4) / 1e6, 'FaceColor', [0.9 0.7 0.1]);
     title('Yearly Energy'); ylabel('kWh/year'); grid on;
     
-    saveas(fig, 'graphs/single_objective_comparisons.png');
+    saveas(fig, "graphs/single_objective_comparisons" + moniker + ".png");
     fprintf('\nSaved comparison chart to graphs/single_objective_comparisons.png\n');
 end
 
