@@ -1,8 +1,9 @@
 function Cost = runEconomicModel(tracking, efficiency, height, width, length, power)
 % choosing the right txt files (either fixed or single)
 
+override = 1
 % PC Function (Excel economics)    
-if ispc
+if 
     if (tracking == 0)
             targettxt = 'FixedAxis.txt'; 
         else

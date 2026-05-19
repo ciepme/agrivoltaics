@@ -74,7 +74,7 @@ end
 %% 2. Set Up GA Options and Constraints
 options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', max_gen, ...
     'FunctionTolerance', 1e-4, 'Display', 'iter', ...
-    'InitialPopulationMatrix', pop, 'UseParallel', true);
+    'InitialPopulationMatrix', pop, 'UseParallel', false);
 
 A = []; B = []; Aeq = []; Beq = [];
 if agriParams.tracking_mode == 1
