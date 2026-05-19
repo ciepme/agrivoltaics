@@ -24,7 +24,7 @@ ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
 % 0 = Fixed Axis, 1 = Single-Axis Tracking 
 % I like to run: bdclose('all'); clear; clear classes; clear functions;
 % clc; when switching between fixed axis and single axis modes
-agriParams.tracking_mode = 1; 
+agriParams.tracking_mode = 0; 
 
 % Max rotation angle for the single-axis tracker (mechanical limit before
 % hitting motor housing or sturcture

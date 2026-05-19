@@ -9,6 +9,7 @@ function struck = agriObjArray2Struct(obj_array)
     struck.crop_revenue = obj_array(5);
     struck.yearly_biomass = obj_array(6);
     struck.n_panels = obj_array(7);
+    struck.yearly_energy = obj_array(8);
 
     % Enforce field order (VERY IMPORTANT for Simulink)
     struck = orderfields(struck);

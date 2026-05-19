@@ -1,6 +1,6 @@
 Program.Name=PVSCM
 Program.Date=10/22/2024
-System.Size=130.03
+System.Size=248.05
 System.Unit=kWdc
 System.Description=50 - 200 MWdc, single-axis tracking, c-Si modules, central inverter
 Optional 2.4 kWh battery energy storage per kWdc of modules
@@ -153,8 +153,8 @@ Factors.Tariff201=System\$ cost\$ tariff\0.1425\\
 Factors.Tariff301=System\$ cost\$ tariff\0.25\\
 Factors.Tariff301high=System\$ cost\$ tariff\0.5\\
 Factors.ModuleEfficiency=Module\m2 modules\kWdc modules\0.200\
-Factors.ModuleHeight=Module\\m\2.647\\
-Factors.ModuleWidth=Module\\m\1.744\\
+Factors.ModuleHeight=Module\\m\3.790\\
+Factors.ModuleWidth=Module\\m\1.940\\
 Factors.ModuleWeight=Module\m2 modules\kg modules\11.5\\
 Factors.CellToModule=Module\kWdc cells\kWdc modules\0.98\\
 Factors.ModuleLabor=Module\m2 modules\hours labor\0.109\\

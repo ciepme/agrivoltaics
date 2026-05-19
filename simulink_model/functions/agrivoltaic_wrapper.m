@@ -31,7 +31,7 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
     total_panels = out.total_panels.Data;
     pv_revenue = out.pv_revenue.Data;
     yearly_biomass = out.yearly_biomass.Data;
-    yearly_energy = out.yearly_energy.P_annual.Data;
+    yearly_energy = out.yearly_energy.Data;
 
     results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels, yearly_energy];
     closeExcel;
