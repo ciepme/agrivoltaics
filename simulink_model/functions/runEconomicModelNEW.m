@@ -17,6 +17,7 @@ function Cost = runEconomicModelNEW(params, height, width, length, system_size)
     p.DiscountRate     = params.discount_rate;
     p.LifetimeYears    = params.investigation_period;
     p.ElectricityRate  = params.crop_elec_price;
+    p.OM_management_per_kwdc_yr = 20; %$/kW extra to help scale for larger size projects
     
     system_size_kwdc = system_size; 
     module_area_m2 = system_size_kwdc / p.ModuleEfficiency;
@@ -100,7 +101,7 @@ function Cost = runEconomicModelNEW(params, height, width, length, system_size)
     
     annual_opex = om_cleaning + om_inspection + om_new_bos + om_new_modules + ...
                   om_new_inverters + (land_area_ha * p.LandLease_per_ha) + ...
-                  (total_capex * p.PropertyTaxRate) + (total_capex * p.InsuranceRate) + p.OM_management_fixed;
+                  (total_capex * p.PropertyTaxRate) + (total_capex * p.InsuranceRate) + p.OM_management_fixed + p.OM_management_per_kwdc_yr*system_size_kwdc;
 
 exponent_value = params.PV_startup_period:p.LifetimeYears-1;
 
@@ -222,7 +223,7 @@ else
     p.ContingencyRate        = 0.025;  % lower contingency at utility scale
     p.DeveloperProfitMSP     = 0.05;   % lower margin at utility scale
     p.LandLease_per_ha       = 1800;
-    p.OM_management_fixed    = 180000; % larger fixed management cost
+    p.OM_management_fixed    = 15000; % larger fixed management cost
     p.Cleaning_per_m2        = 0.54;
     p.Inspection_per_m2      = 0.64;
     p.StorageDuration        = 2.4;

@@ -16,60 +16,117 @@ if ismember('ALL', targets_to_run)
     targets_to_run = {'PROFIT', 'EMISSIONS', 'POWER', 'CROP'};
 end
 
-pop_size = 8;
-max_gen = 8; % Adjust based on your time constraints
+pop_size = 200;
+max_gen = 100
+jy;
 num_vars = length(lb);
-moniker = "pop100";
+moniker = "pop200_gen100_fixedaxis_ALL";
+
+% Use the slew rate defined in agrivoltaics_variable_definition
+max_slew = agriParams.max_slew_per_hour;
 
 %% 1. Generate the Population
 rng(1);
+
 if agriParams.tracking_mode == 1
+
     % Calculate the true sun tracking curve
     agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
     
-    % Clamp them to your max tilt inline 
+    % Clamp to mechanical max tilt
     agriVar.tracking_angles = max(agriVar.tracking_angles, -agriParams.PV_max_tilt);
     agriVar.tracking_angles = min(agriVar.tracking_angles,  agriParams.PV_max_tilt);
+
+    % Enforce slew and bounds season-by-season
+    for s = 1:4
+        start_idx = 7 + (s-1)*24 + 1;
+        end_idx   = 7 + s*24;
+
+        agriVar.tracking_angles(s,:) = enforce_slew_curve( ...
+            agriVar.tracking_angles(s,:), ...
+            lb(start_idx:end_idx), ...
+            ub(start_idx:end_idx), ...
+            max_slew);
+    end
 end
 
-% build x0
+% Build x0
 x0 = agriVarStruct2Array(agriVar, agriParams);
 
-% force x0 to obey bounds
+% Force x0 to obey bounds
 x0 = max(x0(:).', lb(:).');
 x0 = min(x0(:).', ub(:).');
+
+% Repair x0 again after bound clamping
+if agriParams.tracking_mode == 1
+    for s = 1:4
+        start_idx = 7 + (s-1)*24 + 1;
+        end_idx   = 7 + s*24;
+
+        curve = x0(start_idx:end_idx);
+
+        curve = enforce_slew_curve( ...
+            curve, ...
+            lb(start_idx:end_idx), ...
+            ub(start_idx:end_idx), ...
+            max_slew);
+
+        x0(start_idx:end_idx) = curve;
+    end
+end
 
 % Build the population array
 pop = zeros(pop_size, num_vars);
 
-% Member 1 of GA population = true physics-based smart guess perfectly constrained
+% Member 1 of GA population
 pop(1,:) = x0;
 
 % All the other members of initial population
 for i = 2:pop_size
     candidate = x0;
-    
+
     if agriParams.tracking_mode == 1
+
         idx = 8:num_vars;
+
         % Pure random tracking generation
         span = ub(idx) - lb(idx);
         random_angles = lb(idx) + rand(1, length(idx)) .* span;
-        
-        % Smooth to respect slew limit
+
+        % Smooth roughly
         smoothed_angles = smoothdata(random_angles, 'gaussian', 5);
-        
-        % Clamp (forces night hours to 0)
+
+        % Clamp to bounds
         candidate(idx) = max(smoothed_angles, lb(idx));
         candidate(idx) = min(candidate(idx), ub(idx));
+
+        % Enforce slew season-by-season
+        for s = 1:4
+            start_idx = 7 + (s-1)*24 + 1;
+            end_idx   = 7 + s*24;
+
+            curve = candidate(start_idx:end_idx);
+
+            curve = enforce_slew_curve( ...
+                curve, ...
+                lb(start_idx:end_idx), ...
+                ub(start_idx:end_idx), ...
+                max_slew);
+
+            candidate(start_idx:end_idx) = curve;
+        end
+
     else
+
         % Fixed-axis: Pure Random layout generation
         span = ub(1:num_vars) - lb(1:num_vars);
         candidate(1:num_vars) = lb(1:num_vars) + rand(1, num_vars) .* span;
-        
+
         candidate(1:num_vars) = max(candidate(1:num_vars), lb(1:num_vars));
         candidate(1:num_vars) = min(candidate(1:num_vars), ub(1:num_vars));
+
     end
-    
+
     pop(i,:) = candidate;
 end
 
@@ -79,21 +136,35 @@ options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', max_g
     'InitialPopulationMatrix', pop, 'UseParallel', false);
 
 A = []; B = []; Aeq = []; Beq = [];
+
 if agriParams.tracking_mode == 1
-    max_slew_per_hour = deg2rad(45);
-    num_steps = 23; 
-    total_constraints = 4 * (num_steps * 2);
-    
+
+    num_steps = 23;
+    total_constraints = 4 * num_steps * 2;
+
     A = zeros(total_constraints, num_vars);
-    B = ones(total_constraints, 1) * max_slew_per_hour;
-    
+    B = ones(total_constraints, 1) * max_slew;
+
     row = 1;
+
     for s = 1:4
-        offset = 7 + (s-1)*24; 
+        offset = 7 + (s-1)*24;
+
         for h = 1:23
-            v1 = offset + h; v2 = offset + h + 1;
-            A(row, v1) = -1; A(row, v2) = 1;  row = row + 1;
-            A(row, v1) = 1;  A(row, v2) = -1; row = row + 1;
+
+            v1 = offset + h;
+            v2 = offset + h + 1;
+
+            % angle(h+1) - angle(h) <= max_slew
+            A(row, v1) = -1;
+            A(row, v2) =  1;
+            row = row + 1;
+
+            % angle(h) - angle(h+1) <= max_slew
+            A(row, v1) =  1;
+            A(row, v2) = -1;
+            row = row + 1;
+
         end
     end
 end
@@ -119,6 +190,29 @@ for i = 1:num_targets
     % Store for plotting
     results_matrix(i, :) = winning_metrics;
     x_best_set(i, :) = x_best;
+
+    if agriParams.tracking_mode == 1
+
+    max_jump_found = 0;
+
+    for s = 1:4
+        start_idx = 7 + (s-1)*24 + 1;
+        end_idx   = 7 + s*24;
+
+        curve = x_best(start_idx:end_idx);
+
+        max_jump_found = max(max_jump_found, max(abs(diff(curve))));
+    end
+
+    fprintf('Max tracking slew found: %.2f deg/hr\n', rad2deg(max_jump_found));
+    fprintf('Allowed tracking slew:   %.2f deg/hr\n', rad2deg(max_slew));
+
+    if ~isempty(A)
+        constraint_violation = max(A*x_best(:) - B);
+        fprintf('Max linear constraint violation: %.3e\n', constraint_violation);
+    end
+
+end
     
     fprintf('\n--- RESULTS FOR %s ---\n', current_target);
     fprintf('Time Taken: %.2f seconds\n', time_taken);
@@ -132,64 +226,89 @@ end
 if num_targets > 1
     fig = figure('Name', 'Objective Comparison', 'Color', 'w', 'Position', [100, 100, 1000, 800]);
     t = tiledlayout(2, 2, 'TileSpacing', 'compact', 'Padding', 'compact');
-    title(t, 'Comparison of Winning Layouts by Optimization Target', 'FontWeight', 'bold', 'FontSize', 14);
+    title(t, 'Optimal Final Value Comparisons by Objective', 'FontWeight', 'bold', 'FontSize', 14);
     
     target_labels = categorical(targets_to_run);
     
     % Plot 1: Profit
     nexttile;
     bar(target_labels, results_matrix(:, 2) / 1e6, 'FaceColor', [0.2 0.6 0.5]);
-    title('Total Profit'); ylabel('Millions ($M)'); grid on;
+    title('Lifetime Profit'); ylabel('Millions (USD)'); grid on;
     
     % Plot 2: Emissions / Power
     nexttile;
     bar(target_labels, results_matrix(:, 1) / 1e6, 'FaceColor', [0.3 0.4 0.7]);
-    title('Emissions Reduction (Power)'); ylabel('kt CO2e'); grid on;
+    title('Displaced CO2 Emissions'); ylabel('kt CO2e'); grid on;
     
     % Plot 3: Crop Yield
     nexttile;
     bar(target_labels, results_matrix(:, 6), 'FaceColor', [0.8 0.4 0.2]);
     title('Crop Yield'); ylabel('kg/year'); grid on;
     
-  % Plot 4: PV Revenue
+  % Plot 4: PV Energy
     nexttile;
     bar(target_labels, results_matrix(:, 4) / 1e6, 'FaceColor', [0.9 0.7 0.1]);
-    title('Yearly Energy'); ylabel('kWh/year'); grid on;
+    title('Energy Generation'); ylabel('kWh/year'); grid on;
     
     saveas(fig, "graphs/single_objective_comparisons" + moniker + ".png");
     fprintf('\nSaved comparison chart to graphs/single_objective_comparisons.png\n');
 end
 
 % Save workspace data
-save('agrivoltaic_comparative_optimization_data.mat', 'targets_to_run', 'results_matrix', 'x_best_set');
+save("agrivoltaic_comparative_optimization_data"+moniker+".mat", 'targets_to_run', 'results_matrix', 'x_best_set');
 
 %% 
 % Plot physical design comparison
-
-fig_layout = figure('Name', 'Optimal Layout Comparison', 'Color', 'w', 'Position', [150, 150, 1200, 600]);
-t_layout = tiledlayout(2, 4, 'TileSpacing', 'compact', 'Padding', 'compact');
-title(t_layout, 'Optimal Physical Design Variables by Objective', 'FontWeight', 'bold', 'FontSize', 14);
-
-var_names = {'Height (m)', 'Length (m)', 'Width (m)', 'Azimuth (deg)', 'Tilt (deg)', 'Row Spacing (m)', 'Panel Gap (m)'};
-
-% Convert Azimuth (4) and Tilt (5) from radians to degrees for readability
-layout_data = x_best_set(:, 1:7);
-layout_data(:, 4) = rad2deg(layout_data(:, 4));
-layout_data(:, 5) = rad2deg(layout_data(:, 5));
-
-colors = lines(num_targets); % Get distinct colors for each target
-
-for v = 1:7
-    nexttile;
-    hold on; grid on;
-    for i = 1:num_targets
-        bar(categorical({targets_to_run{i}}), layout_data(i, v), 'FaceColor', colors(i,:));
+if agriParams.tracking_mode == 0
+    fig_layout = figure('Name', 'Optimal Layout Comparison', 'Color', 'w', 'Position', [150, 150, 1200, 600]);
+    t_layout = tiledlayout(2, 4, 'TileSpacing', 'compact', 'Padding', 'compact');
+    title(t_layout, 'Optimal Design by Objective', 'FontWeight', 'bold', 'FontSize', 14);
+    
+    var_names = {'Height (m)', 'Length (m)', 'Width (m)', 'Azimuth (deg)', 'Tilt (deg)', 'Row Spacing (m)', 'Panel Gap (m)'};
+    
+    % Convert Azimuth (4) and Tilt (5) from radians to degrees for readability
+    layout_data = x_best_set(:, 1:7);
+    layout_data(:, 4) = rad2deg(layout_data(:, 4));
+    layout_data(:, 5) = rad2deg(layout_data(:, 5));
+    
+    colors = lines(num_targets); % Get distinct colors for each target
+    
+    for v = 1:7
+        nexttile;
+        hold on; grid on;
+        for i = 1:num_targets
+            bar(categorical({targets_to_run{i}}), layout_data(i, v), 'FaceColor', colors(i,:));
+        end
+        title(var_names{v}, 'FontWeight', 'bold');
+        ylabel('Value');
     end
-    title(var_names{v}, 'FontWeight', 'bold');
-    ylabel('Value');
+else 
+    fig_layout = figure('Name', 'Optimal Layout Comparison', 'Color', 'w', 'Position', [150, 150, 1200, 600]);
+    t_layout = tiledlayout(2, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
+    title(t_layout, 'Optimal Design by Objective', 'FontWeight', 'bold', 'FontSize', 14);
+    
+    % Removed Azimuth and Tilt names
+    var_names = {'Height (m)', 'Length (m)', 'Width (m)', 'Row Spacing (m)', 'Panel Gap (m)'};
+    
+    % Pull columns: 1 (Height), 2 (Length), 3 (Width), 6 (Row Spacing), 7 (Panel Gap)
+    keep_indices = [1, 2, 3, 6, 7];
+    layout_data = x_best_set(:, keep_indices);
+    
+    colors = lines(num_targets); % Get distinct colors for each target
+    
+    % Loop through the 5 remaining design variables
+    for v = 1:5
+        nexttile;
+        hold on; grid on;
+        for i = 1:num_targets
+            bar(categorical({targets_to_run{i}}), layout_data(i, v), 'FaceColor', colors(i,:));
+        end
+        title(var_names{v}, 'FontWeight', 'bold');
+        ylabel('Value');
+    end
 end
 
-saveas(fig_layout, 'graphs/optimal_layout_comparison.png');
+saveas(fig_layout, "graphs/optimal_layout_comparison" + moniker + ".png");
 fprintf('Saved layout comparison chart to graphs/optimal_layout_comparison.png\n');
 
 %%
@@ -225,7 +344,7 @@ if agriParams.tracking_mode == 1
         
         % Plot the "Ideal Physics" baseline for comparison
         ideal_angles_deg = rad2deg(agriVar.tracking_angles(s, :));
-        plot(hours, ideal_angles_deg, '--k', 'LineWidth', 1.5, 'DisplayName', 'Pure Sun Tracking');
+        plot(hours, ideal_angles_deg, '--k', 'LineWidth', 1.5, 'DisplayName', 'Slew-Limited Sun Tracking');
         
         % Formatting
         xlim([1 24]);
@@ -236,9 +355,11 @@ if agriParams.tracking_mode == 1
             legend('Location', 'best');
         end
     end
-    saveas(fig_track, 'graphs/optimal_tracking_curves.png');
+    saveas(fig_track, "graphs/optimal_tracking_curves" + moniker + ".png");
     fprintf('Saved tracking curves chart to graphs/optimal_tracking_curves.png\n');
 end
+
+
 
 %% Helper function
 function fitness = targeted_objective_wrapper(x, params, target)
@@ -259,4 +380,53 @@ function fitness = targeted_objective_wrapper(x, params, target)
         otherwise
             error('Unknown target. Please use PROFIT, EMISSIONS, POWER, or CROP.');
     end
+end
+
+function angles_out = enforce_slew_curve(angles_in, lb_curve, ub_curve, max_slew)
+% Enforces:
+%   lb_curve(h) <= angle(h) <= ub_curve(h)
+%   abs(angle(h+1) - angle(h)) <= max_slew
+%
+% Uses repeated forward/backward passes. For 24-hour curves this is cheap.
+
+    angles_out = angles_in;
+
+    n_iter = 10;
+
+    for iter = 1:n_iter
+
+        % Clamp to bounds
+        angles_out = max(angles_out, lb_curve);
+        angles_out = min(angles_out, ub_curve);
+
+        % Forward pass
+        for h = 2:length(angles_out)
+
+            lower_from_prev = angles_out(h-1) - max_slew;
+            upper_from_prev = angles_out(h-1) + max_slew;
+
+            angles_out(h) = min(max(angles_out(h), lower_from_prev), upper_from_prev);
+
+            % Re-clamp after slew adjustment
+            angles_out(h) = max(angles_out(h), lb_curve(h));
+            angles_out(h) = min(angles_out(h), ub_curve(h));
+
+        end
+
+        % Backward pass
+        for h = length(angles_out)-1:-1:1
+
+            lower_from_next = angles_out(h+1) - max_slew;
+            upper_from_next = angles_out(h+1) + max_slew;
+
+            angles_out(h) = min(max(angles_out(h), lower_from_next), upper_from_next);
+
+            % Re-clamp after slew adjustment
+            angles_out(h) = max(angles_out(h), lb_curve(h));
+            angles_out(h) = min(angles_out(h), ub_curve(h));
+
+        end
+
+    end
+
 end
