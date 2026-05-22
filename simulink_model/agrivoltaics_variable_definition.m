@@ -30,6 +30,9 @@ agriParams.tracking_mode = 0;
 % hitting motor housing or sturcture
 agriParams.PV_max_tilt = 60 * (pi/180); % Convert degrees to radians
 
+% Max slew rate for single-axis tracker (radians per hour)
+agriParams.max_slew_per_hour = deg2rad(20);
+
 % tracking angles for optimizer matrix definition
 % 4x24 matrix (4 seasons, 24 hours). 
 agriVar.tracking_angles = zeros(4, 24);
@@ -152,43 +155,118 @@ agriVar.PV_x_p = 0.1;         % panel distance (m)
 % agriVar.PV_z_p = 1;
 % agriVar.PV_sigma = 0;
 
-%% if single-axis tracking, set bounds + physics-based initialization
+% %% if single-axis tracking, set bounds + physics-based initialization
+% made it so not 0 degree bound for night
+% if agriParams.tracking_mode == 1
+% 
+%     %  creation of basic tracking based only on solar power
+%     agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
+% 
+%     % generic bounds for the GA
+%     tracking_lb = zeros(1, 96); 
+%     tracking_ub = zeros(1, 96); 
+% 
+%     seasons = {'spring', 'summer', 'fall', 'winter'};
+%     max_tilt = agriParams.PV_max_tilt;
+% 
+%     for s = 1:4
+%         season_name = seasons{s};
+% 
+%         % Check your weather struct for daytime (altitude > 0)
+%         beta_s = agriParams.weather.(season_name).beta_s; 
+%         is_daytime = beta_s > 0;
+% 
+%         % Map day/night bounds to a flat 1x96 array segment
+%         start_idx = (s-1)*24 + 1;
+%         end_idx = s*24;
+% 
+%         % If daytime, allow bounds [-max_tilt, +max_tilt]. If night, bounds are [0, 0].
+%         tracking_lb(start_idx:end_idx) = -max_tilt .* is_daytime;
+%         tracking_ub(start_idx:end_idx) =  max_tilt .* is_daytime;
+%     end
+% 
+%     % Append to existing bounds
+%     lb = [lb, tracking_lb]; 
+%     ub = [ub, tracking_ub]; 
+% 
+% else
+%     % Required for Simulink bus consistency
+%     agriVar.tracking_angles = zeros(4,24);
+% end
+
+% Dynamic tracking bounds: allow negative angles (East) during the day
+
+%% Single-axis tracking bounds and initialization
 if agriParams.tracking_mode == 1
-    
-    %  creation of basic tracking based only on solar power
+
+    % Physics-based initial tracking curve
     agriVar.tracking_angles = generate_physics_tracking(agriParams, agriVar);
-    
-    % generic bounds for the GA
-    tracking_lb = zeros(1, 96); 
-    tracking_ub = zeros(1, 96); 
-    
+
+    % Clamp initial physics curve to mechanical tilt limit
+    agriVar.tracking_angles = max(agriVar.tracking_angles, -agriParams.PV_max_tilt);
+    agriVar.tracking_angles = min(agriVar.tracking_angles,  agriParams.PV_max_tilt);
+
+    % Initialize 96 tracking bounds
+    tracking_lb = zeros(1, 96);
+    tracking_ub = zeros(1, 96);
+
     seasons = {'spring', 'summer', 'fall', 'winter'};
+
     max_tilt = agriParams.PV_max_tilt;
-    
+    max_slew = agriParams.max_slew_per_hour;
+
+    % Number of hours needed to move from 0 to max tilt
+    ramp_hours = ceil(max_tilt / max_slew);
+
+    % Store masks for debugging/plotting
+    agriParams.tracking_daytime_mask = false(4, 24);
+    agriParams.tracking_move_mask    = false(4, 24);
+
     for s = 1:4
-        season_name = seasons{s};
-        
-        % Check your weather struct for daytime (altitude > 0)
-        beta_s = agriParams.weather.(season_name).beta_s; 
+
+        beta_s = agriParams.weather.(seasons{s}).beta_s;
         is_daytime = beta_s > 0;
-        
-        % Map day/night bounds to a flat 1x96 array segment
-        start_idx = (s-1)*24 + 1;
-        end_idx = s*24;
-        
-        % If daytime, allow bounds [-max_tilt, +max_tilt]. If night, bounds are [0, 0].
-        tracking_lb(start_idx:end_idx) = -max_tilt .* is_daytime;
-        tracking_ub(start_idx:end_idx) =  max_tilt .* is_daytime;
+
+        day_idx = find(is_daytime);
+
+        % Default: tracker must be stowed at 0
+        can_move = false(1, 24);
+
+        if ~isempty(day_idx)
+
+            first_day_hour = day_idx(1);
+            last_day_hour  = day_idx(end);
+
+            % Allow motion before sunrise and after sunset
+            move_start = max(1,  first_day_hour - ramp_hours);
+            move_end   = min(24, last_day_hour  + ramp_hours);
+
+            can_move(move_start:move_end) = true;
+
+        end
+
+        local_start = (s-1)*24 + 1;
+        local_end   = s*24;
+
+        tracking_lb(local_start:local_end) = -max_tilt .* can_move;
+        tracking_ub(local_start:local_end) =  max_tilt .* can_move;
+
+        agriParams.tracking_daytime_mask(s, :) = is_daytime;
+        agriParams.tracking_move_mask(s, :)    = can_move;
+
     end
-    
-    % Append to existing bounds
-    lb = [lb, tracking_lb]; 
-    ub = [ub, tracking_ub]; 
+
+    % Append tracking bounds to seven layout-variable bounds
+    lb = [lb(1:7), tracking_lb];
+    ub = [ub(1:7), tracking_ub];
 
 else
-    % Required for Simulink bus consistency
-    agriVar.tracking_angles = zeros(4,24);
+
+    % Fixed-axis case
+    agriVar.tracking_angles = zeros(4, 24);
+
 end
+
 %%  Simulink Bus Objects
 agriParams = orderfields(agriParams);
 agriVar    = orderfields(agriVar);
@@ -206,29 +284,7 @@ clear(info_2.busName);
 % Clean up
 clear info_1 info_2;
 
-% =========================================================================
-% DYNAMIC TRACKING BOUNDS
-% Allow negative angles (East) during the day, force 0 at night
-% =========================================================================
-if isfield(agriParams, 'tracking_mode') && agriParams.tracking_mode == 1
-    % First, make sure lb and ub are actually 103 elements long. 
-    % If they are only 7 elements long, pad them out.
-    if length(lb) < 103
-        lb = [lb(1:7), zeros(1, 96)];
-        ub = [ub(1:7), zeros(1, 96)];
-    end
-    
-    seasons = {'spring', 'summer', 'fall', 'winter'};
-    for s = 1:4
-        is_daytime = agriParams.weather.(seasons{s}).beta_s > 0;
-        start_idx = 7 + (s-1)*24 + 1;
-        end_idx = 7 + s*24;
-        
-        % Overwrite the bounds using the dynamic daytime mask
-        lb(start_idx:end_idx) = -agriParams.PV_max_tilt .* is_daytime;
-        ub(start_idx:end_idx) =  agriParams.PV_max_tilt .* is_daytime;
-    end
-end
+
 
 %% helper functions
 function ci_avg_hourly = get_season_hourly_ci(data_dir, file_season)
