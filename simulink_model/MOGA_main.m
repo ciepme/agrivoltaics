@@ -55,11 +55,7 @@ nlcon = [];
 
 ga_final_pop_set = [];
 
-if mode == 0
-    ga_set = ones(1,7);
-elseif mode == 1
-    ga_set = ones(1,103);
-end
+ga_set = ones(1, num_vars);
 
 %% Run GA
 

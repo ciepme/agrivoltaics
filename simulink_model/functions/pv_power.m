@@ -16,7 +16,10 @@ function [P_annual, P_spring_hourly, P_summer_hourly, P_fall_hourly, P_winter_ho
         y = params.land_y; % Total plot length (m)
     
     %number of panels that fit on the plot
-if params.tracking_mode == 1
+if isfield(params, 'geometry_mode') && params.geometry_mode == 1
+    n_cols = params.slice_count;
+    n_rows = params.row_count;
+elseif params.tracking_mode == 1
     % TRACKING LAYOUT: Panels roll East/West. 
     % They need max clearance when flat (width = w_p). 
     % The length (l_p) does not tilt, so it is just l_p.

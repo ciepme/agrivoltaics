@@ -1,0 +1,40 @@
+Row-Centered Raspberry Shading Key Changes
+
+- Row-centered geometry is opt-in. Legacy team behavior remains the default.
+
+- Simulink bus compatibility requires numeric geometry mode values:
+  agriParams.geometry_mode = 0 means legacy geometry.
+  agriParams.geometry_mode = 1 means row-centered raspberry geometry.
+  The planning language used strings like 'legacy' and 'row_centered', but the implementation stores 0/1 in agriParams because Simulink Bus Constants do not accept character fields cleanly.
+
+- To switch modes from agrivoltaics_variable_definition.m, set the local geometry_mode variable:
+  geometry_mode = 'legacy';
+  geometry_mode = 'row_centered';
+  That local string is converted into the numeric agriParams.geometry_mode value before bus creation.
+
+- Row-centered shading evaluates a representative raspberry hedge slice and includes adjacent source panels using:
+  agriParams.shading_optimization_row_offsets = -2:2;
+  agriParams.shading_optimization_slice_offsets = -10:10;
+  This is a 5 by 21 neighborhood of panel source cells around the representative cell.
+  The row offsets include two adjacent raspberry rows in each cross-row direction, while the slice offsets include ten panel slices in each along-row direction.
+
+- Row-centered mode uses the 50 m by 50 m plot as an exact 11 by 50 grid:
+  row_count = 11;
+  row_pitch = 50 / 11;
+  slice_count = 50;
+  fixed_panel_length = 1.0;
+  total_panels = 11 * 50 = 550;
+
+- Row-centered design-vector contracts:
+  Fixed axis: [PV_z_p, PV_w_p, PV_sigma, PV_d_norm]
+  Single axis: [PV_z_p, PV_w_p, PV_d_norm, tracking_angles(1:96)]
+
+- Row-centered dimensional convention:
+  PV_l_p is fixed to fixed_panel_length = 1.0 m and represents the along-row slice length.
+  PV_w_p is the cross-row panel span, and it is the dimension that rotates/tilts in row-centered shading.
+  The row-centered PV_w_p bounds are 1.0 to 2.5 m, with default PV_w_p = 1.75 m.
+  Legacy fixed-axis shading uses PV_l_p as the fixed-tilt dimension, while legacy single-axis and row-centered modes use the cross-row span as the tracking/tilting dimension.
+
+- Shading height is configurable through agriParams.shading_sample_heights_m.
+  Default is 0 m for optimizer speed and legacy comparability.
+  Set [0 0.5 1.0] to average ground, 0.5 m, and 1.0 m shading.

@@ -1,4 +1,8 @@
 function crop_GCF = ground_cover_factor(var, agriParams)
+    if isfield(agriParams, 'geometry_mode') && agriParams.geometry_mode == 1
+        crop_GCF = agriParams.hedge_width / agriParams.row_pitch;
+        return;
+    end
     
     % Total distance from one solar row to the next
     unit_row_width = var.PV_w_p + var.PV_y_p; 

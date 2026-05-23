@@ -1,12 +1,13 @@
 % Clear and Setup
 clear;
 clc;
+bdclose('all');
 
 addpath(genpath(pwd));
 
 agrivoltaics_variable_definition;
 
-GA_SELECTOR = 1;
+GA_SELECTOR = 4;
 save_name = sprintf('agrivoltaics_GA_main_data_w_selector_%d.mat', GA_SELECTOR);
 % Tell GA exactly how many variables we are optimizing (7 or 103, dependent
 % on fixed or single-axis)
@@ -16,7 +17,7 @@ x0_base = agriVarStruct2Array(agriVar, agriParams);
 %adds an InitialPopulationMatrix for better initial guess
 
 x0 = agriVarStruct2Array(agriVar, agriParams);
-pop_size = 50;
+pop_size = 20;
 
 % build a better initial population
 
@@ -33,7 +34,7 @@ for i = 2:pop_size
     candidate = x0;
     
 if agriParams.tracking_mode == 1
-        idx = 8:num_vars;
+        idx = tracking_angle_indices(agriParams);
         
         % random generation of population
         span = ub(idx) - lb(idx);
@@ -73,9 +74,14 @@ elseif GA_SELECTOR == 3
         'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', x0);
 elseif GA_SELECTOR == 4
     rng(4);
-    options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', 100, ...
-        'FunctionTolerance', 1e-4,'MaxStallGenerations', 10,'Display', ...
-        'iter','PlotFcn', @gaplotbestf, 'InitialPopulationMatrix', x0);
+    options = optimoptions('ga', ...
+    'PopulationSize', pop_size, ...
+    'MaxGenerations', 5, ...
+    'FunctionTolerance', 1e-4, ...
+    'MaxStallGenerations', 3, ...
+    'Display', 'iter', ...
+    'PlotFcn', @gaplotbestf, ...
+    'InitialPopulationMatrix', pop);
 end
 
 
@@ -84,10 +90,10 @@ A = []; B = []; Aeq = []; Beq = [];
 nlcon = [];
 
 if agriParams.tracking_mode == 1
-    max_slew_per_hour = deg2rad(15); % Max 15 degree rotation per hour
+    max_slew_per_hour = agriParams.max_slew_per_hour;
+    tracking_idx = tracking_angle_indices(agriParams);
     
     % We have 4 seasons * 24 hours = 96 tracking variables.
-    % In our flat array, these are indices 8 through 103.
     num_steps = 23; % 23 hour-to-hour transitions per day
     num_constraints_per_season = num_steps * 2; % 2 rules per step (positive and negative limit)
     total_constraints = 4 * num_constraints_per_season;
@@ -97,10 +103,9 @@ if agriParams.tracking_mode == 1
     
     row = 1;
     for s = 1:4
-        offset = 7 + (s-1)*24; % Offset to the start of this season's variables
         for h = 1:23
-            v1 = offset + h;
-            v2 = offset + h + 1;
+            v1 = tracking_idx((s-1)*24 + h);
+            v2 = tracking_idx((s-1)*24 + h + 1);
             
             % Constraint 1: x(h+1) - x(h) <= max_slew
             A(row, v1) = -1;
@@ -127,13 +132,8 @@ fprintf('Exit Flag: %d\n', exitflag);
 fprintf('Time Taken: %.2f seconds\n', time_taken);
 fprintf('Function Calls: %.0f\n', output.funccount);
 fprintf('Max Value: $%.2f\n', -fval);
-fprintf('Panel Height: %.2f m\n', ga_solve(1));
-fprintf('Panel Length: %.2f m\n', ga_solve(2));
-fprintf('Panel Width: %.2f m\n', ga_solve(3));
-fprintf('Azimuth %.2f rad (%.1f deg)\n', ga_solve(4), rad2deg(ga_solve(4)));
-fprintf('Tilt: %.2f rad (%.1f deg)\n', ga_solve(5), rad2deg(ga_solve(5)));
-fprintf('Row Spacing: %.2f m\n', ga_solve(6));
-fprintf('Panel Gap (x_p): %.2f m\n', ga_solve(7))
+ga_var = agriVarArray2Struct(ga_solve, agriParams);
+print_design_summary(ga_var, agriParams);
 fprintf('\n');
 print_value_breakdown(ga_solve, agriParams);
 

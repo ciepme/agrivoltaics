@@ -24,14 +24,23 @@ ub = [4.5, 2.5, 1.5,  pi/2, pi/2, 10.0, 1.0];
 % 0 = Fixed Axis, 1 = Single-Axis Tracking 
 % I like to run: bdclose('all'); clear; clear classes; clear functions;
 % clc; when switching between fixed axis and single axis modes
-agriParams.tracking_mode = 0; 
+agriParams.tracking_mode = 1;
 
 % Max rotation angle for the single-axis tracker (mechanical limit before
 % hitting motor housing or sturcture
 agriParams.PV_max_tilt = 60 * (pi/180); % Convert degrees to radians
 
 % Max slew rate for single-axis tracker (radians per hour)
-agriParams.max_slew_per_hour = deg2rad(20);
+agriParams.max_slew_per_hour = deg2rad(15);
+
+% Geometry definition
+% Set geometry_mode to 'row_centered' to enable raspberry-row-relative
+% shading. agriParams.geometry_mode is numeric for Simulink bus support:
+% 0 = legacy, 1 = row_centered.
+% geometry_mode = 'row_centered';
+geometry_mode = 'legacy';
+agriParams.geometry_mode = double(strcmpi(geometry_mode, 'row_centered'));
+agriParams.shading_sample_heights_m = 0;
 
 % tracking angles for optimizer matrix definition
 % 4x24 matrix (4 seasons, 24 hours). 
@@ -44,6 +53,20 @@ agriVar.tracking_angles = zeros(4, 24);
 agriParams.land_x = 50;       % length of base (m)
 agriParams.land_y = 50;       % length of height (m)
 agriParams.land_angle = 0;    % rotation (rad)
+
+% Row-centered raspberry defaults. These are inert unless geometry_mode is
+% set to 'row_centered' above.
+agriParams.row_count = 11;
+agriParams.row_pitch = agriParams.land_y / agriParams.row_count;
+agriParams.row_length = agriParams.land_x;
+agriParams.slice_count = 50;
+agriParams.fixed_panel_length = agriParams.row_length / agriParams.slice_count;
+agriParams.hedge_width = 2 * 0.3048;
+agriParams.PV_d_norm_min = -1;
+agriParams.PV_d_norm_max = 1;
+agriParams.row_centered_fixed_phi = pi / 2;
+agriParams.shading_optimization_row_offsets = -2:2;
+agriParams.shading_optimization_slice_offsets = -10:10;
 
 % 2. Load the processed weather data from the .mat file
 load('pv_weather_4seasons.mat', 'weather_struct');
@@ -141,6 +164,38 @@ agriVar.PV_phi = 0;           % azimuth (rad)
 agriVar.PV_sigma = 0;      % tilt (rad)
 agriVar.PV_y_p = 2.0;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
+
+if agriParams.geometry_mode == 1
+    row_centered_panel_span_min = 1.0;
+    row_centered_panel_span_max = 2.5;
+
+    agriParams.land_x = 50;
+    agriParams.land_y = 50;
+    agriParams.row_count = 11;
+    agriParams.row_pitch = agriParams.land_y / agriParams.row_count;
+    agriParams.row_length = agriParams.land_x;
+    agriParams.slice_count = 50;
+    agriParams.fixed_panel_length = agriParams.row_length / agriParams.slice_count;
+
+    agriVar.PV_z_p = 3.79;
+    agriVar.PV_l_p = agriParams.fixed_panel_length;
+    agriVar.PV_w_p = 1.75;
+    agriVar.PV_x_p = 0;
+    agriVar.PV_y_p = agriParams.row_pitch - agriVar.PV_w_p;
+    agriVar.PV_d_norm = 0;
+
+    if agriParams.tracking_mode == 1
+        agriVar.PV_phi = agriParams.land_angle;
+        agriVar.PV_sigma = 0;
+        lb = [2.5, row_centered_panel_span_min, agriParams.PV_d_norm_min];
+        ub = [4.5, row_centered_panel_span_max, agriParams.PV_d_norm_max];
+    else
+        agriVar.PV_phi = agriParams.row_centered_fixed_phi;
+        agriVar.PV_sigma = 0;
+        lb = [2.5, row_centered_panel_span_min, 0, agriParams.PV_d_norm_min];
+        ub = [4.5, row_centered_panel_span_max, pi/2, agriParams.PV_d_norm_max];
+    end
+end
 
 % agriVar.PV_z_p = 4.5;           % panel height (m)
 % agriVar.PV_l_p = 2.5;           % panel length (m)
@@ -256,9 +311,9 @@ if agriParams.tracking_mode == 1
 
     end
 
-    % Append tracking bounds to seven layout-variable bounds
-    lb = [lb(1:7), tracking_lb];
-    ub = [ub(1:7), tracking_ub];
+    % Append tracking bounds to the active layout-variable bounds.
+    lb = [lb, tracking_lb];
+    ub = [ub, tracking_ub];
 
 else
 
@@ -293,5 +348,3 @@ function ci_avg_hourly = get_season_hourly_ci(data_dir, file_season)
     % 12 five-minute points per hour --> 24 hourly vals--> in lbs/MWh
     ci_avg_hourly = mean(reshape(ci_season_day_5min, 12, []), 1).';
 end
-
-

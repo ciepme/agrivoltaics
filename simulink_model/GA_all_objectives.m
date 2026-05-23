@@ -24,6 +24,7 @@ moniker = "pop200_gen100_fixedaxis_ALL";
 
 % Use the slew rate defined in agrivoltaics_variable_definition
 max_slew = agriParams.max_slew_per_hour;
+tracking_idx = tracking_angle_indices(agriParams);
 
 %% 1. Generate the Population
 rng(1);
@@ -39,13 +40,12 @@ if agriParams.tracking_mode == 1
 
     % Enforce slew and bounds season-by-season
     for s = 1:4
-        start_idx = 7 + (s-1)*24 + 1;
-        end_idx   = 7 + s*24;
+        season_idx = tracking_idx((s-1)*24 + (1:24));
 
         agriVar.tracking_angles(s,:) = enforce_slew_curve( ...
             agriVar.tracking_angles(s,:), ...
-            lb(start_idx:end_idx), ...
-            ub(start_idx:end_idx), ...
+            lb(season_idx), ...
+            ub(season_idx), ...
             max_slew);
     end
 end
@@ -60,18 +60,17 @@ x0 = min(x0(:).', ub(:).');
 % Repair x0 again after bound clamping
 if agriParams.tracking_mode == 1
     for s = 1:4
-        start_idx = 7 + (s-1)*24 + 1;
-        end_idx   = 7 + s*24;
+        season_idx = tracking_idx((s-1)*24 + (1:24));
 
-        curve = x0(start_idx:end_idx);
+        curve = x0(season_idx);
 
         curve = enforce_slew_curve( ...
             curve, ...
-            lb(start_idx:end_idx), ...
-            ub(start_idx:end_idx), ...
+            lb(season_idx), ...
+            ub(season_idx), ...
             max_slew);
 
-        x0(start_idx:end_idx) = curve;
+        x0(season_idx) = curve;
     end
 end
 
@@ -87,7 +86,7 @@ for i = 2:pop_size
 
     if agriParams.tracking_mode == 1
 
-        idx = 8:num_vars;
+        idx = tracking_idx;
 
         % Pure random tracking generation
         span = ub(idx) - lb(idx);
@@ -102,18 +101,17 @@ for i = 2:pop_size
 
         % Enforce slew season-by-season
         for s = 1:4
-            start_idx = 7 + (s-1)*24 + 1;
-            end_idx   = 7 + s*24;
+            season_idx = tracking_idx((s-1)*24 + (1:24));
 
-            curve = candidate(start_idx:end_idx);
+            curve = candidate(season_idx);
 
             curve = enforce_slew_curve( ...
                 curve, ...
-                lb(start_idx:end_idx), ...
-                ub(start_idx:end_idx), ...
+                lb(season_idx), ...
+                ub(season_idx), ...
                 max_slew);
 
-            candidate(start_idx:end_idx) = curve;
+            candidate(season_idx) = curve;
         end
 
     else
@@ -148,12 +146,10 @@ if agriParams.tracking_mode == 1
     row = 1;
 
     for s = 1:4
-        offset = 7 + (s-1)*24;
-
         for h = 1:23
 
-            v1 = offset + h;
-            v2 = offset + h + 1;
+            v1 = tracking_idx((s-1)*24 + h);
+            v2 = tracking_idx((s-1)*24 + h + 1);
 
             % angle(h+1) - angle(h) <= max_slew
             A(row, v1) = -1;
@@ -196,10 +192,9 @@ for i = 1:num_targets
     max_jump_found = 0;
 
     for s = 1:4
-        start_idx = 7 + (s-1)*24 + 1;
-        end_idx   = 7 + s*24;
+        season_idx = tracking_idx((s-1)*24 + (1:24));
 
-        curve = x_best(start_idx:end_idx);
+        curve = x_best(season_idx);
 
         max_jump_found = max(max_jump_found, max(abs(diff(curve))));
     end
@@ -264,16 +259,20 @@ if agriParams.tracking_mode == 0
     t_layout = tiledlayout(2, 4, 'TileSpacing', 'compact', 'Padding', 'compact');
     title(t_layout, 'Optimal Design by Objective', 'FontWeight', 'bold', 'FontSize', 14);
     
-    var_names = {'Height (m)', 'Length (m)', 'Width (m)', 'Azimuth (deg)', 'Tilt (deg)', 'Row Spacing (m)', 'Panel Gap (m)'};
-    
-    % Convert Azimuth (4) and Tilt (5) from radians to degrees for readability
-    layout_data = x_best_set(:, 1:7);
-    layout_data(:, 4) = rad2deg(layout_data(:, 4));
-    layout_data(:, 5) = rad2deg(layout_data(:, 5));
+    if isfield(agriParams, 'geometry_mode') && agriParams.geometry_mode == 1
+        var_names = {'Height (m)', 'Width (m)', 'Tilt (deg)', 'Row Offset'};
+        layout_data = x_best_set(:, 1:4);
+        layout_data(:, 3) = rad2deg(layout_data(:, 3));
+    else
+        var_names = {'Height (m)', 'Length (m)', 'Width (m)', 'Azimuth (deg)', 'Tilt (deg)', 'Row Spacing (m)', 'Panel Gap (m)'};
+        layout_data = x_best_set(:, 1:7);
+        layout_data(:, 4) = rad2deg(layout_data(:, 4));
+        layout_data(:, 5) = rad2deg(layout_data(:, 5));
+    end
     
     colors = lines(num_targets); % Get distinct colors for each target
     
-    for v = 1:7
+    for v = 1:numel(var_names)
         nexttile;
         hold on; grid on;
         for i = 1:num_targets
@@ -330,12 +329,11 @@ if agriParams.tracking_mode == 1
         ylabel('Panel Angle (Degrees)');
         
         % Map the flat array back to the specific season's 24 hours
-        start_idx = 7 + (s-1)*24 + 1;
-        end_idx = 7 + s*24;
+        season_idx = tracking_idx((s-1)*24 + (1:24));
         
         % Plot the curve for each objective
         for i = 1:num_targets
-            angles_rad = x_best_set(i, start_idx:end_idx);
+            angles_rad = x_best_set(i, season_idx);
             angles_deg = rad2deg(angles_rad);
             
             plot(hours, angles_deg, '-o', 'LineWidth', 2, 'MarkerSize', 4, ...

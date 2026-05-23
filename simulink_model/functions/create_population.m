@@ -24,7 +24,7 @@ function x0 = create_population(pop_size)
     
         if agriParams.tracking_mode == 1
             % Only perturb tracking angles (more stable)
-            idx = 8:num_vars;
+            idx = tracking_angle_indices(agriParams);
     
             noise = 0.1 * agriParams.PV_max_tilt * randn(size(idx));
             candidate(idx) = candidate(idx) + noise;

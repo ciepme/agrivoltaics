@@ -1,0 +1,498 @@
+Row-Centered Raspberry Shading Explainer
+=======================================
+
+Purpose
+-------
+This branch adds an optional row-centered raspberry shading geometry to the
+agrivoltaics Simulink/MATLAB model.
+
+The goal is to keep the team's existing legacy model available while adding a
+more explicit raspberry-row shading mode. In row-centered mode, shading is
+computed against actual raspberry hedge rows instead of against a generic
+uniform crop area.
+
+
+Files Most Users Will Touch
+---------------------------
+Most runs should only require editing:
+
+  agrivoltaics_variable_definition.m
+
+The key settings are near the top:
+
+  agriParams.tracking_mode = 0;      % fixed-axis
+  agriParams.tracking_mode = 1;      % single-axis tracking
+
+  geometry_mode = 'legacy';--> what we have been using
+  geometry_mode = 'row_centered';--> adding the new shading integration
+
+
+When switching modes in MATLAB, it is still a good habit to run:
+
+  bdclose('all'); clear; clc
+
+Then run something like:
+
+  agrivoltaics_GA_main
+
+
+Geometry Mode Values
+--------------------
+The planning language uses these readable names:
+
+  'legacy'
+  'row_centered'
+
+Internally, Simulink needs numeric values for bus compatibility:
+
+  agriParams.geometry_mode = 0  means legacy geometry
+  agriParams.geometry_mode = 1  means row-centered raspberry geometry
+
+Do not manually set:
+
+  agriParams.geometry_mode = 'row_centered'
+
+That can break Simulink bus constants. Instead, edit:
+
+  geometry_mode = 'row_centered'; (line 41 Agrivoltaics variable definition file)
+
+The script converts that string to the numeric value.
+
+
+Available Configurations
+------------------------
+There are four configurations:
+
+  1. Legacy fixed-axis (should be identical to what y'all were using before)
+     geometry_mode = 'legacy'
+     agriParams.tracking_mode = 0
+
+  2. Legacy single-axis (should be identical to what y'all were using before)
+     geometry_mode = 'legacy'
+     agriParams.tracking_mode = 1
+
+  3. Row-centered fixed-axis (new)
+     geometry_mode = 'row_centered'
+     agriParams.tracking_mode = 0
+
+  4. Row-centered single-axis (new)
+     geometry_mode = 'row_centered'
+     agriParams.tracking_mode = 1
+
+
+Legacy Mode
+-----------
+Legacy mode keeps the team's existing model behavior.
+
+Legacy fixed-axis design vector:
+
+  [PV_z_p, PV_l_p, PV_w_p, PV_phi, PV_sigma, PV_y_p, PV_x_p]
+
+Legacy fixed-axis vector length:
+
+  7 variables
+
+Legacy single-axis design vector:
+
+  [PV_z_p, PV_l_p, PV_w_p, PV_phi, PV_sigma, PV_y_p, PV_x_p,
+   tracking_angles(1:96)]
+
+Legacy single-axis vector length:
+
+  103 variables
+
+Legacy bounds:
+
+  PV_z_p   : 2.5 to 4.5 m
+  PV_l_p   : 1.0 to 2.5 m
+  PV_w_p   : 1.0 to 1.5 m
+  PV_phi   : -pi/2 to pi/2 rad
+  PV_sigma : 0 to pi/2 rad
+  PV_y_p   : 2.0 to 10.0 m
+  PV_x_p   : 0.1 to 1.0 m
+
+In legacy crop modeling, raspberries are treated as a uniform effective crop
+coverage over the plot. They are not modeled as individual hedge rows.
+
+Legacy crop ground cover factor is based on spacing and clearance:
+
+  unit_row_width = PV_w_p + PV_y_p
+  unplantable_width = support_width + harvest_clearance + safety_buffer
+  crop_GCF = max(0, unit_row_width - unplantable_width) / unit_row_width
+
+With current hand-picking defaults:
+
+  support_width = 0.5 m
+  harvest_clearance = 1.2 m
+  safety_buffer = 0.3 m
+
+
+Row-Centered Mode
+-----------------
+Row-centered mode explicitly represents raspberry hedge rows.
+
+Fixed plot assumptions:
+
+  land_x = 50 m
+  land_y = 50 m
+  row_count = 11
+  row_pitch = 50 / 11 = 4.5455 m
+  row_length = 50 m
+  slice_count = 50
+  fixed_panel_length = 50 / 50 = 1.0 m
+  hedge_width = 2 ft = 0.6096 m
+
+Panel count in row-centered mode:
+
+  total_panels = row_count * slice_count = 11 * 50 = 550
+
+Crop ground cover factor in row-centered mode:
+
+  crop_GCF = hedge_width / row_pitch
+           = 0.6096 / 4.5455
+           approximately 0.134
+
+
+Row-Centered Design Variables
+-----------------------------
+Row-centered fixed-axis design vector:
+
+  [PV_z_p, PV_w_p, PV_sigma, PV_d_norm]
+
+Row-centered fixed-axis vector length:
+
+  4 variables
+
+Row-centered single-axis design vector:
+
+  [PV_z_p, PV_w_p, PV_d_norm, tracking_angles(1:96)]
+
+Row-centered single-axis vector length:
+
+  99 variables
+
+Row-centered bounds:
+
+  PV_z_p   : 2.5 to 4.5 m
+  PV_w_p   : 1.0 to 2.5 m
+  PV_sigma : 0 to pi/2 rad       fixed-axis only
+  PV_d_norm: -1 to 1
+
+Current row-centered default:
+
+  PV_z_p = 3.79 m
+  PV_l_p = 1.0 m
+  PV_w_p = 1.75 m
+  PV_d_norm = 0
+
+
+Important Dimension Convention
+------------------------------
+This is the easiest part to mix up.
+
+Legacy mode:
+
+  PV_l_p and PV_w_p keep the team's existing meaning.
+  In legacy fixed-axis shading, PV_l_p is the dimension that pitches/tilts.
+
+Row-centered mode:
+
+  PV_l_p is fixed to 1.0 m and means the along-row slice length.
+  PV_w_p is the cross-row panel span and is the dimension that tilts/rotates.
+
+So row-centered PV_w_p is not just the old legacy short-side width copied
+directly into a new mode. It is the cross-row panel span in the row-centered
+coordinate system.
+
+The GA printout labels this as:
+
+  Panel span across rows     : ... m (tilting dimension)
+
+
+PV_d_norm Meaning
+-----------------
+PV_d_norm is unitless.
+
+It describes where the panel center sits relative to the raspberry hedge center
+inside the row pitch.
+
+Conversion to meters:
+
+  panel_center_offset_m = PV_d_norm * ((row_pitch - PV_w_p) / 2)
+
+Interpretation:
+
+  PV_d_norm = 0   means panel center is centered on the hedge center
+  PV_d_norm > 0   means east/local +x of hedge center
+  PV_d_norm < 0   means west/local -x of hedge center
+
+Example:
+
+  row_pitch = 4.5455 m
+  PV_w_p = 2.41 m
+  PV_d_norm = -0.55
+
+  offset = -0.55 * ((4.5455 - 2.41) / 2)
+         approximately -0.59 m
+
+This means the panel center is about 0.59 m west of the hedge center.
+
+
+Row-Centered Derived Fields
+---------------------------
+In row-centered mode, some fields still exist for Simulink compatibility, but
+they are derived rather than optimized.
+
+  PV_l_p = fixed_panel_length = 1.0 m
+  PV_x_p = 0
+  PV_y_p = row_pitch - PV_w_p
+
+PV_y_p in row-centered mode should be read as the open cross-row gap used for
+compatibility with legacy field names. It is not the raspberry row pitch.
+
+The actual raspberry row pitch is:
+
+  row_pitch = 50 / 11 = 4.5455 m
+
+
+Single-Axis Tracking
+--------------------
+Single-axis mode has 96 tracking angle design variables:
+
+  4 representative seasons * 24 hours = 96 angles
+
+The angle bounds use:
+
+  PV_max_tilt = 60 degrees
+  max_slew_per_hour = 15 degrees/hour
+
+The GA constraints enforce a 15 degree/hour slew rate across each representative
+day. The bounds also restrict tracker movement around daylight periods and keep
+unneeded nighttime values at zero.
+
+Current vector indices:
+
+  legacy single-axis tracking angles start at index 8
+  row-centered single-axis tracking angles start at index 4
+
+The helper function tracking_angle_indices(agriParams) handles this difference.
+
+
+Row-Centered Shading Logic
+--------------------------
+Row-centered shading computes:
+
+  shadowed raspberry hedge area / total raspberry hedge area
+
+It evaluates a representative hedge slice and includes neighboring source
+panels.
+
+Current source-panel neighborhood:
+
+  agriParams.shading_optimization_row_offsets = -2:2
+  agriParams.shading_optimization_slice_offsets = -10:10
+
+This is:
+
+  5 cross-row offsets * 21 along-row offsets = 105 source panel cells
+
+The cross-row offsets include two neighboring raspberry rows in each direction.
+The along-row offsets include ten panel slices in each direction.
+
+Shading sample height:
+
+  agriParams.shading_sample_heights_m = 0
+
+The default is ground-level shading for speed and comparability.
+
+To average across ground, 0.5 m, and 1.0 m above ground:
+
+  agriParams.shading_sample_heights_m = [0 0.5 1.0];
+
+
+Running A GA
+------------
+1. Open agrivoltaics_variable_definition.m.
+
+2. Choose the desired mode:
+
+   agriParams.tracking_mode = 0;      fixed-axis
+   agriParams.tracking_mode = 1;      single-axis
+
+   geometry_mode = 'legacy';
+   geometry_mode = 'row_centered';
+
+3. In MATLAB:
+
+   cd('/path/to/simulink_model')
+   bdclose('all'); clear; clc
+   agrivoltaics_GA_main
+
+4. Check the printed output.
+
+Useful sanity checks:
+
+  legacy fixed-axis should print 7 variables
+  legacy single-axis should print 103 variables
+  row-centered fixed-axis should print 4 variables
+  row-centered single-axis should print 99 variables
+
+For row-centered mode, the printed design summary includes:
+
+  Panel span across rows
+  Raspberry row pitch
+  Raspberry hedge width
+  Crop ground cover fraction
+  PV_d_norm and the corresponding meter offset
+  Derived PV_y_p and PV_x_p
+
+
+Inspecting Results
+------------------
+After a GA run, agrivoltaics_GA_main saves a result file like:
+
+  agrivoltaics_GA_main_data_w_selector_4.mat
+
+To inspect the newest saved GA result:
+
+  inspect_GA_results
+
+This script:
+
+  - loads the most recent agrivoltaics_GA_main_data_w_selector_*.mat file
+  - reprints the optimized design summary
+  - reprints the value breakdown
+  - plots hourly shading fractions for spring, summer, fall, and winter
+  - plots tracking angles for single-axis runs
+  - saves a row-centered shadow snapshot for row-centered runs
+
+To inspect a specific result file, edit this line near the top of
+inspect_GA_results.m:
+
+  result_file = '';
+
+For example:
+
+  result_file = 'agrivoltaics_GA_main_data_w_selector_4.mat';
+
+
+Generating A 96-Hour Shading GIF
+--------------------------------
+inspect_GA_results.m can generate a 96-hour row-centered shading GIF.
+
+Near the top of inspect_GA_results.m, change:
+
+  make_shading_gif = default_make_shading_gif();
+
+to:
+
+  make_shading_gif = true;
+
+Then run:
+
+  inspect_GA_results
+
+The GIF is saved under:
+
+  results/ga_inspection_YYYYMMDD_HHMMSS/
+
+with a name like:
+
+  optimized_row_centered_shading_96hr_z0.0m.gif
+
+This GIF is for visual diagnosis and communication. It is slower than normal
+inspection because it renders 96 polyshape frames.
+
+
+Visual Sanity Checks
+--------------------
+To generate default row-centered fixed/single snapshot PNGs:
+
+  row_centered_shading_visual_check
+
+This writes to:
+
+  results/row_centered_visual_check_YYYYMMDD_HHMMSS/
+
+These are diagnostics only and should generally not be committed.
+
+
+Generated Files
+---------------
+GA result .mat files, GIFs, PNGs, Simulink cache files, and broad optimization
+outputs are generated artifacts. They are useful locally, but should generally
+stay out of implementation commits unless the group explicitly wants to archive
+a specific result.
+
+
+Common Pitfalls
+---------------
+1. Setting agriParams.geometry_mode to a string.
+
+   Do not do this:
+
+     agriParams.geometry_mode = 'row_centered'
+
+   Instead use:
+
+     geometry_mode = 'row_centered';
+
+2. Forgetting to close loaded Simulink diagrams when switching modes.
+
+   Use:
+
+     bdclose('all'); clear; clc
+
+3. Confusing row-centered PV_y_p with row pitch.
+
+   In row-centered mode:
+
+     row_pitch = 50 / 11
+     PV_y_p = row_pitch - PV_w_p
+
+   PV_y_p is a derived compatibility field, not an optimized raspberry row
+   spacing.
+
+4. Confusing legacy width/length with row-centered span/length.
+
+   In row-centered mode:
+
+     PV_l_p = fixed along-row slice length = 1.0 m
+     PV_w_p = cross-row tilting span = optimized from 1.0 to 2.5 m
+
+5. Reusing stale design vectors.
+
+   Row-centered mode intentionally fails clearly if a stale legacy vector length
+   is used:
+
+     legacy fixed vector length: 7
+     legacy single vector length: 103
+     row-centered fixed vector length: 4
+     row-centered single vector length: 99
+
+
+Quick Reference
+---------------
+Row-centered fixed-axis:
+
+  geometry_mode = 'row_centered';
+  agriParams.tracking_mode = 0;
+  design vector length = 4
+
+Row-centered single-axis:
+
+  geometry_mode = 'row_centered';
+  agriParams.tracking_mode = 1;
+  design vector length = 99
+
+Row-centered panel count:
+
+  550 panels
+
+Row-centered GCF:
+
+  approximately 0.134
+
+Row-centered shading neighborhood:
+
+  5 x 21 = 105 source panel cells
