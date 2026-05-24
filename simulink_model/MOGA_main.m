@@ -22,6 +22,7 @@ agrivoltaics_variable_definition;
 
 %User define statements
 GA_SELECTOR = 1;
+USE_PARALLEL_PROCESSING = true;
 
 %GA hyperparameter settings
 pop_size = 300;
@@ -44,6 +45,7 @@ if GA_SELECTOR == 1
         'MaxGenerations', max_gen, ...
         'ParetoFraction', 0.35, ...
         'PlotFcn', @gaplotpareto, ...
+        'UseParallel', USE_PARALLEL_PROCESSING, ...
         'Display', 'iter');
 elseif GA_SELECTOR == 2
     rng(2);
@@ -97,7 +99,7 @@ ylabel("Annual Raspberry Production (g/m^2)");
 scatter(-scores(:,2), -scores(:,3), val_size, 'black', 'filled');
 scatter(-fval(:,2), -fval(:,3), front_size, 'green', 'filled');
 %scatter(star_x_position_social_profit, star_y_position_berry_production, utopia_size, 'cyan', 'filled', "pentagram");
-legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
+legend("Values from GA Population", "Designs on Pareto Front", "Utopia Point", 'Location','southwest');
 %ylim([0 star_y_position_berry_production]);
 %xlim([0 star_x_position_social_profit]);
 hold off;
@@ -110,7 +112,7 @@ ylabel("Emission Reduction (t CO2e)");
 scatter(-scores(:,2), -scores(:,1), val_size, 'black', 'filled');
 scatter(-fval(:,2), -fval(:,1), front_size, 'green', 'filled');
 %scatter(star_x_position_social_profit, star_y_position_berry_production, utopia_size, 'cyan', 'filled', "pentagram");
-legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
+legend("Values from GA Population", "Designs on Pareto Front", "Utopia Point", 'Location','southwest');
 %ylim([0 star_y_position_berry_production]);
 %xlim([0 star_x_position_social_profit]);
 hold off;
@@ -123,7 +125,7 @@ ylabel("Emission Reduction (t CO2e)");
 scatter(-scores(:,3), -scores(:,1), val_size, 'black', 'filled');
 scatter(-fval(:,3), -fval(:,1), front_size, 'green', 'filled');
 %scatter(star_x_position_social_profit, star_y_position_berry_production, utopia_size, 'cyan', 'filled', "pentagram");
-legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
+legend("Values from GA Population", "Designs on Pareto Front", "Utopia Point", 'Location','southwest');
 %ylim([0 star_y_position_berry_production]);
 %xlim([0 star_x_position_social_profit]);
 hold off;

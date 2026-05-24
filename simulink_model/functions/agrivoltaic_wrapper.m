@@ -15,7 +15,12 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
     %agriSim = agriSim.setModelParameter('SimulationMode','Rapid');
     %agriSim = agriSim.setModelParameter('RapidAcceleratorUpToDateCheck','off'); 
 
-    %fprintf('z_p: %.2f\n', agriVar.PV_z_p);
+    % --- PARALLEL WORKER WORKSPACE PATCH ---
+    % Check if 'params_bus' exists in the current worker's base workspace
+    if ~evalin('base', 'exist(''params_bus'', ''var'')')
+        % Option A: Run the initialization script that defines your buses
+        evalin('base', 'agrivoltaics_variable_definition;'); 
+    end
 
     %run sim
     out = sim(agriSim);

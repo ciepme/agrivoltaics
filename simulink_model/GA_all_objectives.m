@@ -255,7 +255,7 @@ if num_targets > 1
 end
 
 % Save workspace data
-save("agrivoltaic_comparative_optimization_data"+moniker+".mat", 'targets_to_run', 'results_matrix', 'x_best_set');
+save("results/agrivoltaic_comparative_optimization_data"+moniker+".mat", 'targets_to_run', 'results_matrix', 'x_best_set');
 
 %% 
 % Plot physical design comparison

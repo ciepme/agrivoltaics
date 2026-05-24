@@ -1,5 +1,7 @@
 function totalCost = imported_economic_model(tracking,efficiency,moduleheight,modulewidth,modulelength,netpower,projectduration)
 
+%disp("Using imported economic model");
+
 %Module Cost Parameters (Same between Fixed and Single)
 moduleyieldloss = 0.01; % $lost/$directcost measure of upstream modules produced but scrapped
 moduleweight = 12.56; %kg/m2 representative of UPV c-Si modules
