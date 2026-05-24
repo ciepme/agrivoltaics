@@ -10,17 +10,17 @@ agrivoltaics_variable_definition;
 % Choose what to optimize. You can put one or multiple in this cell array.
 % Options: 'PROFIT', 'EMISSIONS', 'POWER', 'CROP', 'ALL'
 % =========================================================================
-targets_to_run = {'ALL'}; 
+targets_to_run = {'PROFIT'}; 
 
 if ismember('ALL', targets_to_run)
     targets_to_run = {'PROFIT', 'EMISSIONS', 'POWER', 'CROP'};
 end
 
-pop_size = 200;
-max_gen = 100
-jy;
+pop_size = 10;
+max_gen = 10;
+
 num_vars = length(lb);
-moniker = "pop200_gen100_fixedaxis_ALL";
+moniker = "pop10_gen10_fixedaxis_newPROFIT";
 
 % Use the slew rate defined in agrivoltaics_variable_definition
 max_slew = agriParams.max_slew_per_hour;
@@ -219,7 +219,7 @@ end
     fprintf('Profit: $%.2f M\n', winning_metrics(2) / 1e6);
     fprintf('Emissions Reduction: %.2f kt CO2e\n', winning_metrics(1) / 1e6);
     fprintf('Crop Yield: %.2f g/m^2\n', winning_metrics(6));
-    fprintf('Yearly Energy: $%.2f\n', winning_metrics(4));
+    fprintf('Yearly Energy: %.2f kWh\n', winning_metrics(8));
 end
 
 %% 4. Plot Comparative Graphic
@@ -246,9 +246,9 @@ if num_targets > 1
     title('Crop Yield'); ylabel('kg/year'); grid on;
     
   % Plot 4: PV Energy
-    nexttile;
-    bar(target_labels, results_matrix(:, 4) / 1e6, 'FaceColor', [0.9 0.7 0.1]);
-    title('Energy Generation'); ylabel('kWh/year'); grid on;
+  nexttile;
+  bar(target_labels, results_matrix(:, 8), 'FaceColor', [0.9 0.7 0.1]);
+  title('Energy Generation'); ylabel('kWh/year'); grid on;
     
     saveas(fig, "graphs/single_objective_comparisons" + moniker + ".png");
     fprintf('\nSaved comparison chart to graphs/single_objective_comparisons.png\n');
