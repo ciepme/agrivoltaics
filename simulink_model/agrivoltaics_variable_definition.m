@@ -165,6 +165,15 @@ agriVar.PV_sigma = 0;      % tilt (rad)
 agriVar.PV_y_p = 2.0;           % row distance (m)
 agriVar.PV_x_p = 0.1;         % panel distance (m)
 
+if agriParams.geometry_mode == 0 && agriParams.tracking_mode == 1
+    % Legacy single-axis rows/torque tubes run north-south along PV_l_p.
+    % PV_w_p is the cross-row tilting span, so it uses the wider bounds.
+    agriVar.PV_l_p = 1.45;
+    agriVar.PV_w_p = 2.43;
+    lb(2:3) = [1.0, 1.0];
+    ub(2:3) = [1.5, 2.5];
+end
+
 if agriParams.geometry_mode == 1
     row_centered_panel_span_min = 1.0;
     row_centered_panel_span_max = 2.5;

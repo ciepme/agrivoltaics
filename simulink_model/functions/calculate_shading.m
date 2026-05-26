@@ -17,8 +17,15 @@ function [SF_spring, SF_summer, SF_fall, SF_winter] = calculate_shading(var, par
     crop_azimuth = rad2deg(params.land_angle);
     
     % unit cell definition (speeds up calc)
-    unit_width = PV_width + pair_distance;
-    unit_length = PV_length + row_distance;
+    if params.tracking_mode == 1
+        % Legacy single-axis rows run north-south along PV_l_p. The
+        % cross-row gap is PV_y_p; the along-row panel gap is PV_x_p.
+        unit_width = PV_width + row_distance;
+        unit_length = PV_length + pair_distance;
+    else
+        unit_width = PV_width + pair_distance;
+        unit_length = PV_length + row_distance;
+    end
     
     n_pv = 1;
     PV_pairs = [unit_width/2, unit_length/2, PV_height];

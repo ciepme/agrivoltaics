@@ -12,8 +12,13 @@ function print_design_summary(var, params)
     fprintf('Panel width                : %.2f m\n', var.PV_w_p);
     fprintf('Azimuth                    : %.2f rad (%.1f deg)\n', var.PV_phi, rad2deg(var.PV_phi));
     fprintf('Tilt                       : %.2f rad (%.1f deg)\n', var.PV_sigma, rad2deg(var.PV_sigma));
-    fprintf('Panel row gap (PV_y_p)     : %.2f m\n', var.PV_y_p);
-    fprintf('Panel pair gap (PV_x_p)    : %.2f m\n', var.PV_x_p);
+    if isfield(params, 'tracking_mode') && params.tracking_mode == 1
+        fprintf('Cross-row gap (PV_y_p)     : %.2f m\n', var.PV_y_p);
+        fprintf('Along-row gap (PV_x_p)     : %.2f m\n', var.PV_x_p);
+    else
+        fprintf('Panel row gap (PV_y_p)     : %.2f m\n', var.PV_y_p);
+        fprintf('Panel pair gap (PV_x_p)    : %.2f m\n', var.PV_x_p);
+    end
 end
 
 function print_row_centered_design_summary(var, params)

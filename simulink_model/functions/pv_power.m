@@ -20,11 +20,11 @@ if isfield(params, 'geometry_mode') && params.geometry_mode == 1
     n_cols = params.slice_count;
     n_rows = params.row_count;
 elseif params.tracking_mode == 1
-    % TRACKING LAYOUT: Panels roll East/West. 
-    % They need max clearance when flat (width = w_p). 
-    % The length (l_p) does not tilt, so it is just l_p.
-    n_cols = max(1, floor(x / (w_p + x_p)));
-    n_rows = max(1, floor(y / (l_p + y_p))); 
+    % LEGACY SINGLE-AXIS LAYOUT: torque-tube rows run north-south along
+    % PV_l_p. PV_w_p is the cross-row tilting span, PV_y_p is the cross-row
+    % gap, and PV_x_p is the along-row panel gap.
+    n_cols = max(1, floor(x / (w_p + y_p)));
+    n_rows = max(1, floor(y / (l_p + x_p)));
 else
     % FIXED TILT LAYOUT: Panels pitch South. 
     % The length footprint is reduced by the cosine of the tilt.
