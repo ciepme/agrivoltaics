@@ -17,16 +17,29 @@ function [P_annual, P_spring_hourly, P_summer_hourly, P_fall_hourly, P_winter_ho
     
     %number of panels that fit on the plot
 if params.tracking_mode == 1
-    % TRACKING LAYOUT: Panels roll East/West. 
-    % They need max clearance when flat (width = w_p). 
-    % The length (l_p) does not tilt, so it is just l_p.
-    n_cols = max(1, floor(x / (w_p + x_p)));
-    n_rows = max(1, floor(y / (l_p + y_p))); 
+
+    % SINGLE-AXIS TRACKING LAYOUT
+    % Assumption:
+    %   - Torque tube / tracker axis runs North-South, along panel length l_p.
+    %   - Panel rolls East-West, so panel width w_p sweeps across rows.
+    %
+    % Therefore:
+    %   - East-West row-to-row spacing uses w_p + y_p.
+    %   - North-South panel-to-panel spacing along the row uses l_p + x_p.
+
+    n_cols = max(1, floor(x / (w_p + y_p)));   % number of tracker rows across E-W
+    n_rows = max(1, floor(y / (l_p + x_p)));   % panels along each N-S row
+
 else
-    % FIXED TILT LAYOUT: Panels pitch South. 
-    % The length footprint is reduced by the cosine of the tilt.
+
+    % FIXED TILT LAYOUT
+    % Fixed panels pitch in the row-spacing direction.
+    % Existing convention:
+    %   - x_p = panel gap across row
+    %   - y_p = row spacing
     n_cols = max(1, floor(x / (w_p + x_p)));
     n_rows = max(1, floor(y / (l_p*cos(sigma) + y_p)));
+
 end
     A_p = l_p*w_p ; %panel area m^2
     
