@@ -15,6 +15,7 @@ set_param('agrivoltaics_v1', 'InitFcn', '');
 set_param('agrivoltaics_v1', 'SimulationMode', 'normal'); % other option is accelerator, but i think it gets wonky with paralellization
 %% Initial points
 num_vars = numel(lb);
+[A, B, Aeq, Beq] = build_tracking_slew_constraints(num_vars, agriParams);
 N_lhs = 1; %<--CHANGE THIS for num of initial points to test
 lhs_samples = lhsdesign(N_lhs, num_vars);
 X0_lhs = lb + lhs_samples .* (ub - lb);
@@ -87,10 +88,10 @@ if use_parallel
         try
             [x_i, f_i, flag_i, out_i] = fmincon( ...
                 @(x) agrivoltaic_social_cost_of_carbon_wrapper(x, agriParams_copy), ...
-                x0_i, [], [], [], [], lb, ub, [], options);
-            results_cell{si} = {x0_i, x_i, f_i, flag_i, out_i.funcCount, out_i.iterations, toc, '', string(out_i.message), fval_i0};
+                x0_i, A, B, Aeq, Beq, lb, ub, [], options);
+            results_cell{si} = {x0_i, x_i, f_i, flag_i, out_i.funcCount, out_i.iterations, toc, '', string(out_i.message), fval_i0, NaN};
         catch ME
-            results_cell{si} = {x0_i, nan(1,num_vars), NaN, NaN, NaN, NaN, toc, string(ME.message), "", fval_i0};
+            results_cell{si} = {x0_i, nan(1,num_vars), NaN, NaN, NaN, NaN, toc, string(ME.message), "", fval_i0, NaN};
         end
     end
 else
@@ -110,7 +111,7 @@ else
         try
             [x_i, f_i, flag_i, out_i] = fmincon( ...
                 objective_i, ...
-                x0_i, [], [], [], [], lb, ub, [], options_i);
+                x0_i, A, B, Aeq, Beq, lb, ub, [], options_i);
             model_evals_i = getappdata(0, 'multistart_model_eval_count');
             results_cell{si} = {x0_i, x_i, f_i, flag_i, out_i.funcCount, out_i.iterations, toc, '', string(out_i.message), fval_i0, model_evals_i};
         catch ME
@@ -194,15 +195,11 @@ fprintf('Worst converged      : $%.2f\n', -max(conv_fvals));
 fprintf('Range of fval        : $%.2f\n', max(conv_fvals) - min(conv_fvals));
 fprintf('Unique optima (~1%%) : %d\n', n_unique);
 fprintf('\nOptimal Design x*:\n');
-fprintf('  Panel Height  (z_p)  : %.3f m\n',       x_star(1));
-fprintf('  Panel Length  (l_p)  : %.3f m\n',       x_star(2));
-fprintf('  Panel Width   (w_p)  : %.3f m\n',       x_star(3));
-fprintf('  Azimuth       (phi)  : %.3f rad (%.1f deg)\n', x_star(4), rad2deg(x_star(4)));
-fprintf('  Tilt          (sigma): %.3f rad (%.1f deg)\n', x_star(5), rad2deg(x_star(5)));
-fprintf('  Row Spacing   (y_p)  : %.3f m\n',       x_star(6));
-fprintf('  Panel Gap     (x_p)  : %.3f m\n',       x_star(7));
-if num_vars > 7
-    tracking_x_star = x_star(8:end);
+x_star_var = agriVarArray2Struct(x_star, agriParams);
+print_design_summary(x_star_var, agriParams);
+if agriParams.tracking_mode == 1
+    tracking_idx = tracking_angle_indices(agriParams);
+    tracking_x_star = x_star(tracking_idx);
     fprintf('  Tracking vars        : %d values (min %.3f rad, max %.3f rad)\n', ...
         numel(tracking_x_star), min(tracking_x_star), max(tracking_x_star));
 end
@@ -225,8 +222,8 @@ T = table((1:N_starts)', exitflags, ...
     'fval_initial','social_value_initial','fval','social_value', ...
     'func_count','model_evals','iterations','time_s','message'});
 
-base_names = {'z_p','l_p','w_p','phi','sigma','y_p','x_p'};
-for vi = 1:min(7, num_vars)
+base_names = local_design_variable_names(agriParams);
+for vi = 1:min(numel(base_names), num_vars)
     x0_now = X0_starts(:,vi);
     x_now = X_opts(:,vi);
     if ismember(base_names{vi}, {'phi','sigma'})
@@ -238,9 +235,11 @@ for vi = 1:min(7, num_vars)
     end
 end
 
-if num_vars > 7
-    for ti = 8:num_vars
-        track_name = sprintf('tracking_%02d', ti-7);
+if agriParams.tracking_mode == 1
+    tracking_idx = tracking_angle_indices(agriParams);
+    for local_ti = 1:numel(tracking_idx)
+        ti = tracking_idx(local_ti);
+        track_name = sprintf('tracking_%02d', local_ti);
         T.(sprintf('x0_%s_deg', track_name)) = rad2deg(X0_starts(:,ti));
         T.(sprintf('%s_deg', track_name)) = rad2deg(X_opts(:,ti));
     end
@@ -265,7 +264,7 @@ fprintf('\nRunning convergence trace from best starting point...\n');
 conv_history = [];
 options_trace = optimoptions(options, 'Display', 'off', 'OutputFcn', @trace_outfun);
 fmincon(@(x) agrivoltaic_social_cost_of_carbon_wrapper(x, agriParams), ...
-    X0_starts(best_run,:), [], [], [], [], lb, ub, [], options_trace);
+    X0_starts(best_run,:), A, B, Aeq, Beq, lb, ub, [], options_trace);
 conv_history_file = fullfile(results_dir, 'conv_history.mat');
 save(conv_history_file, 'conv_history');
 % plotting the convergence history
@@ -299,4 +298,16 @@ function f = multistart_counting_objective(x, agriParams)
     end
     setappdata(0, 'multistart_model_eval_count', eval_count + 1);
     f = agrivoltaic_social_cost_of_carbon_wrapper(x, agriParams);
+end
+
+function names = local_design_variable_names(agriParams)
+    if isfield(agriParams, 'geometry_mode') && agriParams.geometry_mode == 1
+        if agriParams.tracking_mode == 1
+            names = {'z_p','w_p','d_norm'};
+        else
+            names = {'z_p','w_p','sigma','d_norm'};
+        end
+    else
+        names = {'z_p','l_p','w_p','phi','sigma','y_p','x_p'};
+    end
 end

@@ -22,19 +22,26 @@ agrivoltaics_variable_definition;
 
 %User define statements
 GA_SELECTOR = 1;
+USE_PARALLEL_PROCESSING = false;
 
 %GA hyperparameter settings
 pop_size = 300;
 max_gen = 20;
 stall = 1;
 mode = agriParams.tracking_mode;
+geometry_mode = "legacy";
+if isfield(agriParams, 'geometry_mode') && agriParams.geometry_mode == 1
+    geometry_mode = "row_centered";
+end
 
-moniker = "pop" + pop_size + "_max_gen" + max_gen + "_mode" + mode;
+moniker = "pop" + pop_size + "_max_gen" + max_gen + "_mode" + mode + "_" + geometry_mode;
 
 % Tell GA exactly how many variables we are optimizing (7 or 103, dependent
 %create a smart guess to seed GA population for if tracking mode
 x0_base = agriVarStruct2Array(agriVar, agriParams);
 num_vars = length(lb);
+pop = build_initial_population(agriVar, agriParams, lb, ub, pop_size, 1);
+setup_parallel_pool(USE_PARALLEL_PROCESSING);
 
 %1 for basic GA
 if GA_SELECTOR == 1
@@ -44,18 +51,18 @@ if GA_SELECTOR == 1
         'MaxGenerations', max_gen, ...
         'ParetoFraction', 0.35, ...
         'PlotFcn', @gaplotpareto, ...
+        'InitialPopulationMatrix', pop, ...
+        'UseParallel', USE_PARALLEL_PROCESSING, ...
         'Display', 'iter');
 elseif GA_SELECTOR == 2
     rng(2);
 end
 
 %% Set Up GA
-A = []; B = []; Aeq = []; Beq = [];
+[A, B, Aeq, Beq] = build_tracking_slew_constraints(num_vars, agriParams);
 nlcon = [];
 
 ga_final_pop_set = [];
-
-ga_set = ones(1, num_vars);
 
 %% Run GA
 
@@ -67,10 +74,11 @@ tic;
     nlcon, options);
 
 disp("Time (s) for MOGA: " + toc);
+disp("Parallel Processing for MOGA: " + USE_PARALLEL_PROCESSING);
 
 %% Save Data
 
-save("results/MOGA_data_" + moniker + ".mat", "ga_solve", "fval", "exitflag", "output", "population", "scores");
+save("results/MOGA_data_" + moniker + ".mat", "ga_solve", "fval", "exitflag", "output", "population", "scores", "agriParams", "lb", "ub", "USE_PARALLEL_PROCESSING");
 
 %% Plot
 
@@ -93,7 +101,7 @@ ylabel("Annual Raspberry Production (g/m^2)");
 scatter(-scores(:,2), -scores(:,3), val_size, 'black', 'filled');
 scatter(-fval(:,2), -fval(:,3), front_size, 'green', 'filled');
 %scatter(star_x_position_social_profit, star_y_position_berry_production, utopia_size, 'cyan', 'filled', "pentagram");
-legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
+legend("Values from GA Population", "Designs on Pareto Front", "Utopia Point", 'Location','southwest');
 %ylim([0 star_y_position_berry_production]);
 %xlim([0 star_x_position_social_profit]);
 hold off;
@@ -106,7 +114,7 @@ ylabel("Emission Reduction (t CO2e)");
 scatter(-scores(:,2), -scores(:,1), val_size, 'black', 'filled');
 scatter(-fval(:,2), -fval(:,1), front_size, 'green', 'filled');
 %scatter(star_x_position_social_profit, star_y_position_berry_production, utopia_size, 'cyan', 'filled', "pentagram");
-legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
+legend("Values from GA Population", "Designs on Pareto Front", "Utopia Point", 'Location','southwest');
 %ylim([0 star_y_position_berry_production]);
 %xlim([0 star_x_position_social_profit]);
 hold off;
@@ -119,7 +127,7 @@ ylabel("Emission Reduction (t CO2e)");
 scatter(-scores(:,3), -scores(:,1), val_size, 'black', 'filled');
 scatter(-fval(:,3), -fval(:,1), front_size, 'green', 'filled');
 %scatter(star_x_position_social_profit, star_y_position_berry_production, utopia_size, 'cyan', 'filled', "pentagram");
-legend("Values from GA Population", "Weighted Sum GA Output", "Utopia Point", 'Location','southwest');
+legend("Values from GA Population", "Designs on Pareto Front", "Utopia Point", 'Location','southwest');
 %ylim([0 star_y_position_berry_production]);
 %xlim([0 star_x_position_social_profit]);
 hold off;

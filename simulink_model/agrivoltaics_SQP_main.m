@@ -6,6 +6,7 @@ rng default;
 agrivoltaics_variable_definition;
 
 x0 = agriVarStruct2Array(agriVar, agriParams); %initial guess pulled from variable definition file
+[A, B, Aeq, Beq] = build_tracking_slew_constraints(numel(x0), agriParams);
 % use_scaled_SQP = true; % adding switch for running with scaling or without
 % scale = [1e2, 1e2, 1e2, 1e3, 1e5, 1e5, 1e5]; % scaling values derived from the Hessian at last x_star
 % x0_scaled = x0 .* scale;
@@ -28,7 +29,7 @@ tic; % Start timer
 % else
 %     [x_opt, fval, exitflag, output] = fmincon(@(x) agrivoltaic_social_cost_of_carbon_wrapper(x, agriParams), x0, [], [], [], [], lb, ub, [], options);
 % end
-[x_opt, fval, exitflag, output] = fmincon(@(x) agrivoltaic_social_cost_of_carbon_wrapper(x, agriParams), x0, [], [], [], [], lb, ub, [], options);
+[x_opt, fval, exitflag, output] = fmincon(@(x) agrivoltaic_social_cost_of_carbon_wrapper(x, agriParams), x0, A, B, Aeq, Beq, lb, ub, [], options);
 time_taken = toc;
 
 % Results
@@ -37,13 +38,8 @@ fprintf('Time Taken: %.2f seconds\n', time_taken);
 fprintf('Maximized Social Value: $%.2f\n', -fval); % Flip sign back to positive
 disp(' ');
 disp('Optimal Variables Found:');
-fprintf('  Panel Height (z_p) : %.4f m\n', x_opt(1));
-fprintf('  Panel Length (l_p) : %.4f m\n', x_opt(2));
-fprintf('  Panel Width (w_p)  : %.4f m\n', x_opt(3));
-fprintf('  Azimuth (phi)      : %.4f rad (%.4f deg)\n', x_opt(4), rad2deg(x_opt(4)));
-fprintf('  Tilt (sigma)       : %.4f rad (%.4f deg)\n', x_opt(5), rad2deg(x_opt(5)));
-fprintf('  Row Spacing (y_p)  : %.6f m\n', x_opt(6));
-fprintf('  Panel Gap (x_p)    : %.6f m\n', x_opt(7));
+x_var = agriVarArray2Struct(x_opt, agriParams);
+print_design_summary(x_var, agriParams);
 
 if exist('conv_history', 'var') && ~isempty(conv_history)
     figure;

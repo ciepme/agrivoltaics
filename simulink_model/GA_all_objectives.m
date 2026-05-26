@@ -17,10 +17,14 @@ if ismember('ALL', targets_to_run)
 end
 
 pop_size = 200;
-max_gen = 100
-jy;
+max_gen = 100;
+USE_PARALLEL_PROCESSING = false;
 num_vars = length(lb);
 moniker = "pop200_gen100_fixedaxis_ALL";
+if ~exist('results', 'dir')
+    mkdir('results');
+end
+setup_parallel_pool(USE_PARALLEL_PROCESSING);
 
 % Use the slew rate defined in agrivoltaics_variable_definition
 max_slew = agriParams.max_slew_per_hour;
@@ -131,39 +135,9 @@ end
 %% 2. Set Up GA Options and Constraints
 options = optimoptions('ga', 'PopulationSize', pop_size, 'MaxGenerations', max_gen, ...
     'FunctionTolerance', 1e-4, 'Display', 'iter', ...
-    'InitialPopulationMatrix', pop, 'UseParallel', false);
+    'InitialPopulationMatrix', pop, 'UseParallel', USE_PARALLEL_PROCESSING);
 
-A = []; B = []; Aeq = []; Beq = [];
-
-if agriParams.tracking_mode == 1
-
-    num_steps = 23;
-    total_constraints = 4 * num_steps * 2;
-
-    A = zeros(total_constraints, num_vars);
-    B = ones(total_constraints, 1) * max_slew;
-
-    row = 1;
-
-    for s = 1:4
-        for h = 1:23
-
-            v1 = tracking_idx((s-1)*24 + h);
-            v2 = tracking_idx((s-1)*24 + h + 1);
-
-            % angle(h+1) - angle(h) <= max_slew
-            A(row, v1) = -1;
-            A(row, v2) =  1;
-            row = row + 1;
-
-            % angle(h) - angle(h+1) <= max_slew
-            A(row, v1) =  1;
-            A(row, v2) = -1;
-            row = row + 1;
-
-        end
-    end
-end
+[A, B, Aeq, Beq] = build_tracking_slew_constraints(num_vars, agriParams);
 
 %% 3. Execute Optimization Loop
 num_targets = length(targets_to_run);
@@ -214,7 +188,7 @@ end
     fprintf('Profit: $%.2f M\n', winning_metrics(2) / 1e6);
     fprintf('Emissions Reduction: %.2f kt CO2e\n', winning_metrics(1) / 1e6);
     fprintf('Crop Yield: %.2f g/m^2\n', winning_metrics(6));
-    fprintf('Yearly Energy: $%.2f\n', winning_metrics(4));
+    fprintf('Yearly Energy: %.2f kWh\n', winning_metrics(8));
 end
 
 %% 4. Plot Comparative Graphic
@@ -242,7 +216,7 @@ if num_targets > 1
     
   % Plot 4: PV Energy
     nexttile;
-    bar(target_labels, results_matrix(:, 4) / 1e6, 'FaceColor', [0.9 0.7 0.1]);
+    bar(target_labels, results_matrix(:, 8), 'FaceColor', [0.9 0.7 0.1]);
     title('Energy Generation'); ylabel('kWh/year'); grid on;
     
     saveas(fig, "graphs/single_objective_comparisons" + moniker + ".png");
@@ -250,7 +224,7 @@ if num_targets > 1
 end
 
 % Save workspace data
-save("agrivoltaic_comparative_optimization_data"+moniker+".mat", 'targets_to_run', 'results_matrix', 'x_best_set');
+save("results/agrivoltaic_comparative_optimization_data"+moniker+".mat", 'targets_to_run', 'results_matrix', 'x_best_set', 'agriParams', 'lb', 'ub', 'USE_PARALLEL_PROCESSING');
 
 %% 
 % Plot physical design comparison
@@ -286,17 +260,18 @@ else
     t_layout = tiledlayout(2, 3, 'TileSpacing', 'compact', 'Padding', 'compact');
     title(t_layout, 'Optimal Design by Objective', 'FontWeight', 'bold', 'FontSize', 14);
     
-    % Removed Azimuth and Tilt names
-    var_names = {'Height (m)', 'Length (m)', 'Width (m)', 'Row Spacing (m)', 'Panel Gap (m)'};
-    
-    % Pull columns: 1 (Height), 2 (Length), 3 (Width), 6 (Row Spacing), 7 (Panel Gap)
-    keep_indices = [1, 2, 3, 6, 7];
+    if isfield(agriParams, 'geometry_mode') && agriParams.geometry_mode == 1
+        var_names = {'Height (m)', 'Width (m)', 'Row Offset'};
+        keep_indices = [1, 2, 3];
+    else
+        var_names = {'Height (m)', 'Length (m)', 'Width (m)', 'Row Spacing (m)', 'Panel Gap (m)'};
+        keep_indices = [1, 2, 3, 6, 7];
+    end
     layout_data = x_best_set(:, keep_indices);
     
     colors = lines(num_targets); % Get distinct colors for each target
     
-    % Loop through the 5 remaining design variables
-    for v = 1:5
+    for v = 1:numel(var_names)
         nexttile;
         hold on; grid on;
         for i = 1:num_targets

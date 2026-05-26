@@ -15,7 +15,7 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
     %agriSim = agriSim.setModelParameter('SimulationMode','Rapid');
     %agriSim = agriSim.setModelParameter('RapidAcceleratorUpToDateCheck','off'); 
 
-    %fprintf('z_p: %.2f\n', agriVar.PV_z_p);
+    ensure_worker_bus_objects(agriParams, agriVar);
 
     %run sim
     out = sim(agriSim);
@@ -35,4 +35,54 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
 
     results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels, yearly_energy];
     closeExcel;
+end
+
+function ensure_worker_bus_objects(agriParams, agriVar)
+    signature = bus_signature(agriParams, agriVar);
+
+    has_params_bus = evalin('base', 'exist(''params_bus'', ''var'') == 1');
+    has_var_bus = evalin('base', 'exist(''var_bus'', ''var'') == 1');
+    has_signature = evalin('base', 'exist(''agri_bus_signature'', ''var'') == 1');
+
+    if has_params_bus && has_var_bus && has_signature
+        existing_signature = evalin('base', 'agri_bus_signature');
+        if isequal(existing_signature, signature)
+            return;
+        end
+    end
+
+    params_info = Simulink.Bus.createObject(orderfields(agriParams));
+    params_bus = evalin('base', params_info.busName);
+    assignin('base', 'params_bus', params_bus);
+    evalin('base', sprintf('clear(''%s'')', params_info.busName));
+
+    var_info = Simulink.Bus.createObject(orderfields(agriVar));
+    var_bus = evalin('base', var_info.busName);
+    assignin('base', 'var_bus', var_bus);
+    evalin('base', sprintf('clear(''%s'')', var_info.busName));
+
+    assignin('base', 'agri_bus_signature', signature);
+end
+
+function signature = bus_signature(agriParams, agriVar)
+    signature = struct();
+    signature.params_fields = field_signature(orderfields(agriParams));
+    signature.var_fields = field_signature(orderfields(agriVar));
+end
+
+function sig = field_signature(value)
+    names = fieldnames(value);
+    sig = cell(numel(names), 4);
+
+    for i = 1:numel(names)
+        field_value = value.(names{i});
+        sig{i, 1} = names{i};
+        sig{i, 2} = class(field_value);
+        sig{i, 3} = size(field_value);
+        if isstruct(field_value)
+            sig{i, 4} = field_signature(orderfields(field_value));
+        else
+            sig{i, 4} = [];
+        end
+    end
 end

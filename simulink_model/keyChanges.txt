@@ -38,3 +38,13 @@ Row-Centered Raspberry Shading Key Changes
 - Shading height is configurable through agriParams.shading_sample_heights_m.
   Default is 0 m for optimizer speed and legacy comparability.
   Set [0 0.5 1.0] to average ground, 0.5 m, and 1.0 m shading.
+
+- Parallel optimization is opt-in through USE_PARALLEL_PROCESSING in the
+  optimization scripts. The worker-side Simulink bus setup is built from the
+  actual agriParams/agriVar passed into agrivoltaic_wrapper, rather than
+  rerunning agrivoltaics_variable_definition inside each worker. This avoids
+  stale legacy/row-centered bus definitions when switching modes.
+
+- Run parallel_validation_benchmark.m to compare serial and parallel behavior.
+  It writes validation_summary.csv, validation_report.md, runtime/objective
+  plots, and raw .mat data to results/parallel_validation_<timestamp>/.

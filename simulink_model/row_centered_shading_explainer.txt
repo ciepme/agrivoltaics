@@ -496,3 +496,33 @@ Row-centered GCF:
 Row-centered shading neighborhood:
 
   5 x 21 = 105 source panel cells
+
+
+Parallel Optimization Validation
+--------------------------------
+The GA, MOGA, and validation workflows now support an explicit:
+
+  USE_PARALLEL_PROCESSING = true;
+  USE_PARALLEL_PROCESSING = false;
+
+Parallel workers need Simulink bus objects just like the main MATLAB session.
+The wrapper now creates worker bus objects from the actual agriParams and
+agriVar being simulated. It does not rerun agrivoltaics_variable_definition
+inside workers, because that can accidentally initialize a worker using stale
+file-level mode settings.
+
+To compare serial and parallel behavior, run:
+
+  parallel_validation_benchmark
+
+The script writes a timestamped folder:
+
+  results/parallel_validation_<timestamp>/
+
+Key outputs:
+
+  validation_summary.csv
+  validation_report.md
+  parallel_speedup.png
+  objective_comparison.png
+  validation_raw.mat
