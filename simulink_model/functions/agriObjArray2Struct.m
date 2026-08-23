@@ -1,6 +1,6 @@
 function struck = agriObjArray2Struct(obj_array)
 
-    %results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels];
+    %results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels, capex];
     % 7 Outputs for each simulation
     struck.emission_reduction = obj_array(1);
     struck.fiscal_profit = obj_array(2);
@@ -10,6 +10,7 @@ function struck = agriObjArray2Struct(obj_array)
     struck.yearly_biomass = obj_array(6);
     struck.n_panels = obj_array(7);
     struck.yearly_energy = obj_array(8);
+    struck.capex = obj_array(9);
 
     % Enforce field order (VERY IMPORTANT for Simulink)
     struck = orderfields(struck);

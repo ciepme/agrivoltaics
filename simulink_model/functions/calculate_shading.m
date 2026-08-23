@@ -9,24 +9,12 @@ function [SF_spring, SF_summer, SF_fall, SF_winter] = calculate_shading(var, par
     
     row_distance = var.PV_y_p;
     pair_distance = var.PV_x_p;
-    crop_azimuth = rad2deg(params.land_angle);
+    crop_azimuth = PV_azimuth;
     
-    % unit cell definition (speeds up calc)
-if params.tracking_mode == 1
 
-    % SINGLE-AXIS TRACKING
-    % Width direction is across tracker rows, so row spacing belongs here.
-    unit_width  = PV_width  + row_distance;   % w_p + y_p
-    unit_length = PV_length + pair_distance;  % l_p + x_p
-
-else
-
-    % FIXED-AXIS
-    % Original convention.
     unit_width  = PV_width  + pair_distance;  % w_p + x_p
     unit_length = PV_length + row_distance;   % l_p + y_p
 
-end
     
     n_pv = 1;
     PV_pairs = [unit_width/2, unit_length/2, PV_height];

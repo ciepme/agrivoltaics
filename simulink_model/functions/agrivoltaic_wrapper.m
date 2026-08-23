@@ -11,11 +11,8 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
     agriSim = agriSim.setVariable('agriVar', agriVar);
     agriSim = agriSim.setVariable('agriParams', agriParams);
 
-    %set in rapid accelerator
-    %agriSim = agriSim.setModelParameter('SimulationMode','Rapid');
-    %agriSim = agriSim.setModelParameter('RapidAcceleratorUpToDateCheck','off'); 
 
-    % --- PARALLEL WORKER WORKSPACE PATCH ---
+    % parallel workers
     % Check if 'params_bus' exists in the current worker's base workspace
     if ~evalin('base', 'exist(''params_bus'', ''var'')')
         % Option A: Run the initialization script that defines your buses
@@ -37,7 +34,8 @@ function results = agrivoltaic_wrapper(custom_var, agriParams)
     pv_revenue = out.pv_revenue.Data;
     yearly_biomass = out.yearly_biomass.Data;
     yearly_energy = out.yearly_energy.Data;
+    capex = out.capex.Data;
 
-    results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels, yearly_energy];
-    closeExcel;
+    results = [E, P, social_cost, pv_revenue, crop_revenue, yearly_biomass, total_panels, yearly_energy, capex];
+    
 end

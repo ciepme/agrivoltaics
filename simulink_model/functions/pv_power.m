@@ -1,4 +1,4 @@
-function [P_annual, P_spring_hourly, P_summer_hourly, P_fall_hourly, P_winter_hourly, n_cols, n_rows, total_panels] = pv_power(var, params)
+function [P_annual, P_spring_hourly, P_summer_hourly, P_fall_hourly, P_winter_hourly, n_cols, n_rows, total_panels] = pv_power(var, params, l_p)
     %PV model calculating incidence angle, total radiation, and estimated power
     %output
         % DNI ; %direct normal irradiance
@@ -8,7 +8,7 @@ function [P_annual, P_spring_hourly, P_summer_hourly, P_fall_hourly, P_winter_ho
         l_p = var.PV_l_p; % panel length (m)
         w_p = var.PV_w_p; % panel width (m)
         phi = var.PV_phi; % azimuth angle (radians) - relative to true South, going ccw e.g. pi/2 rad is East
-        sigma =var.PV_sigma; % tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane 
+        sigma = var.PV_sigma; % tilt angle (radians) - fixed sloping angle of PV relative to horizontal (xy) plane 
         n_p = params.PV_n_p;%panel efficiency
         x_p = var.PV_x_p; % Distance between panels in a pair/row (m)
         y_p = var.PV_y_p; % Distance between rows (m)
@@ -18,29 +18,17 @@ function [P_annual, P_spring_hourly, P_summer_hourly, P_fall_hourly, P_winter_ho
     %number of panels that fit on the plot
 if params.tracking_mode == 1
 
-    % SINGLE-AXIS TRACKING LAYOUT
-    % Assumption:
-    %   - Torque tube / tracker axis runs North-South, along panel length l_p.
-    %   - Panel rolls East-West, so panel width w_p sweeps across rows.
-    %
-    % Therefore:
-    %   - East-West row-to-row spacing uses w_p + y_p.
-    %   - North-South panel-to-panel spacing along the row uses l_p + x_p.
-
-    n_cols = max(1, floor(x / (w_p + y_p)));   % number of tracker rows across E-W
-    n_rows = max(1, floor(y / (l_p + x_p)));   % panels along each N-S row
+    l_p_footprint = l_p; %need full panel length
 
 else
 
-    % FIXED TILT LAYOUT
-    % Fixed panels pitch in the row-spacing direction.
-    % Existing convention:
-    %   - x_p = panel gap across row
-    %   - y_p = row spacing
-    n_cols = max(1, floor(x / (w_p + x_p)));
-    n_rows = max(1, floor(y / (l_p*cos(sigma) + y_p)));
+    l_p_footprint = l_p*cos(sigma); % always tilted, so only need projected footprint
 
 end
+
+    n_cols = max(1, floor(x / (w_p + x_p)));
+    n_rows = max(1, floor(y / (l_p_footprint + y_p)));
+
     A_p = l_p*w_p ; %panel area m^2
     
     if n_cols == Inf
@@ -83,9 +71,9 @@ function [P_daily, P_hourly] = calc_daily_pv(season_weather, phi, sigma, n_p, A_
             % The tracker axis faces South, so as it rolls, the panel surface 
             % faces perfectly East (+pi/2) or perfectly West (-pi/2).
             if raw_angle < 0
-                phi_current = pi/2;  % Rolled East
+                phi_current = phi + pi/2;  % Rolled East
             elseif raw_angle > 0
-                phi_current = -pi/2; % Rolled West
+                phi_current = phi -pi/2; % Rolled West
             else
                 phi_current = phi;   % Flat at solar noon
             end

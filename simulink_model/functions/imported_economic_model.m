@@ -1,4 +1,4 @@
-function totalCost = imported_economic_model(tracking,efficiency,moduleheight,modulewidth,modulelength,netpower,projectduration)
+function totalCost = imported_economic_model(tracking, efficiency, moduleheight, modulewidth, modulelength, netpower, projectduration, persona)
 
 %disp("Using imported economic model");
 

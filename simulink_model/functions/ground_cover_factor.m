@@ -1,26 +1,24 @@
 function crop_GCF = ground_cover_factor(var, agriParams)
     
     if agriParams.tracking_mode == 1
-        % TRACKING LAYOUT: Tractors drive N-S between the rows. 
-        % The aisle width is measured E-W.
-        unit_row_pitch = var.PV_w_p + var.PV_y_p; 
+
+        unit_row_pitch = var.PV_l_p + var.PV_y_p; %total width of a row, support to support
     else
-        % FIXED TILT LAYOUT: Tractors drive E-W between the rows. 
-        % The aisle width is measured N-S (accounting for panel tilt).
+
         unit_row_pitch = var.PV_l_p * cos(var.PV_sigma) + var.PV_y_p; 
     end
     
     % Subtract the unplantable areas
-    unplantable_width = agriParams.support_width + agriParams.harvest_clearance + agriParams.safety_buffer;
-    plantable_width = unit_row_pitch - unplantable_width;
-    
-    % Failsafe: if panels are too close together, a tractor can't fit at all!
-    if plantable_width < 0
-        plantable_width = 0; 
-        warning('Panels are too close together! Tractors cannot fit. Yield will be 0.');
+    if agriParams.persona == 1 %this is Fred's persona code
+    unplantable_width = 2*agriParams.harvest_clearance + var.PV_l_p; %buffer on each side + solar panel length
+    else
+    unplantable_width = 2*agriParams.harvest_clearance; %buffer on each side, solar above the person
     end
     
+    plantable_width = unit_row_pitch - unplantable_width;
+    
+    land_utilization_fraction = plantable_width / unit_row_pitch;
     % Update the GCF dynamically
-    crop_GCF = plantable_width / unit_row_pitch;
+    crop_GCF = land_utilization_fraction * agriParams.crop_canopy_cover;
     
 end
